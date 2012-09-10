@@ -1,3 +1,90 @@
+xz-utils (5.1.1alpha+20120614-2) unstable; urgency=low
+
+  * Apply fixes from 5.1.2alpha.  Closes: #685220.
+    - liblzma: report a LZMA_DATA_ERROR when range encoded data starts
+      with a nonzero byte.  This is a sanity check to catch malformed
+      files that no known encoders produce.
+    - xz -v -v --list: Support for decompressing blocks with
+      zero-length uncompressed data was added in xz 5.0.2, not 5.0.3.
+    - xz.1: "xz --robot -v -v --list" gained a "minimum xz version to
+      decompress" field.
+  * xz-utils/README.Debian: Document differences from upstream.
+    Closes: #685217.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Mon, 10 Sep 2012 14:35:33 -0700
+
+xz-utils (5.1.1alpha+20120614-1) unstable; urgency=low
+
+  * New snapshot, taken from upstream commit f1675f76.
+    - liblzma: BCJ filters would return a spurious LZMA_BUF_ERROR
+      result in certain circumstances.  As a result, the xz tool
+      could produce inappropriate "Compressed data is corrupt" or
+      "Unexpected end of input" failures (reported in XZ Embedded as
+      Fedora bug 735408).
+    - "xz -v -v --list" prints the minimal XZ Utils version needed
+      to decompress a stream.
+    - "xz --robot -v --list" formats filenames more plainly.
+    - xzgrep does not fail unconditionally when the decompressor
+      dies with SIGPIPE due to unconsumed output any more.  This
+      makes the exit status from commands such as "xzgrep -q" and
+      "xzgrep -l" more predictable and convenient for scripts.
+    - examples/xz_pipe_decomp.c did not check correctly for
+      truncated input.
+    - There is a new set of sample programs.  The old ones have
+      been renamed to examples_old but are still maintained.
+  * liblzma:
+    - If dlopen() indicates that liblzma.so.2 is loaded, check fewer
+      reserved fields in the stream argument to the lzma_code()
+      function.  This prevents out-of-bounds reads when liblzma5
+      functions are called by code built against liblzma2 (see
+      <http://sourceware.org/PR12977>).
+    - Remove the lzma_code@Base compatibility symbol.
+      Closes: #649522.  Thanks to Eduard Bloch.
+    - Install run-time library to /lib so it can be used before /usr
+      is mounted.  Closes: #672120.
+    - Configure with --disable-threads for now to avoid needlessly
+      linking to libpthread and librt.
+  * liblzma-dev:
+    - Install an appropriate library for static linking instead of
+      the decompression-only version used to build xzdec.
+      Closes: #673001.  Thanks to Anton Tolchanov.
+    - Use the liblzma2-compatible version of lzma_code() in the
+      static library.
+    - Multi-Arch: same.  Thanks to Riku Voipio.
+    - Install new examples and revised old examples to
+      /usr/share/doc/liblzma-dev.
+  * xz-utils:
+    - Use update-alternatives to provide lzma, unlzma, lzcat, and
+      the rest of the lz* scripts without conflicting with the lzma
+      package.
+    - Conflicts: lzma versions before before 9.22-1, when it started
+      providing lzma, unlzma, and lzcat through the alternatives
+      system.
+    - Conflicts: and Replaces: xz-lzma.
+    - README.Debian: Update instructions on configuring the package
+      to provide lzma compatibility commands.
+  * Remove xz-lzma package.
+  * Use dpkg-buildflags to retrieve compiler flags, including
+    hardening options.  Build-Depends: dpkg-dev (>= 1.16.1).
+    Closes: #653739.
+  * debian/rules:
+    - build-arch: Simplify by using a double-colon rule instead of a
+      dependency on a dummy noop target.
+    - build-indep: Assume doxygen is available, instead of trying to
+      get by by assuming the caller meant to invoke build-arch when
+      it is missing.  Build-Depends: dpkg-dev (>= 1.16.2).
+    - Rearrange for clarity.
+  * debian/symbols: Bump the minimal version for lzma_code(),
+    lzma_raw_buffer_decode(), and lzma_raw_buffer_encode().
+  * Use machine-readable copyright-format 1.0.
+  * Update copyright file.
+  * Standards-Version: 3.9.3 (checked).
+  * debian/changelog.upstream.sh: Use ‘git rev-list | git diff-tree’
+    instead of ‘git log’ to avoid depending on the build system’s
+    configuration.
+
+ -- Jonathan Nieder <jrnieder@gmail.com>  Sat, 16 Jun 2012 15:03:17 -0500
+
 xz-utils (5.1.1alpha+20110809-3) unstable; urgency=low
 
   * liblzma: Match upstream ABI.

@@ -3,26 +3,39 @@
 build clean install binary-arch binary-indep binary:
 	+dh $@ --parallel $(opt_no_act)
 
-build-arch: build-plain build-small
-	$(MAKE) -f debian/rules $(test_targets)
+# Runs tests, too, if and only if nocheck is unset (see below).
+build-arch:: build-plain build-static build-small
 
 build-indep: debian/normal-build/Makefile
-	: 'Work around bug #478524'
-	set -e; if type doxygen >/dev/null 2>/dev/null; \
-	then \
-		cd debian/normal-build; \
-		doxygen Doxyfile; \
-	fi
+	cd debian/normal-build && doxygen Doxyfile
+
+autoreconf_sources := $(wildcard Makefile.am */Makefile.am */*/Makefile.am)
+autoreconf_sources += configure.ac
+
+autoreconf_products := $(wildcard Makefile.in */Makefile.in */*/Makefile.in)
+autoreconf_products += configure	# and more, but these will do
+
+configure_input := $(autoreconf_products)
+configure_input += Doxyfile.in
+configure_input += src/liblzma/liblzma.pc.in
+configure_input += $(wildcard src/scripts/*.in)
 
 override_dh_auto_clean:
 	rm -f debian/*-stamp
 	dh_auto_clean --builddirectory debian/xzdec-build
 	dh_auto_clean --builddirectory debian/normal-build
+	dh_auto_clean --builddirectory debian/static-build
 	sh debian/clean.sh
 
 override_dh_auto_install:
-	dh_auto_install --builddirectory debian/normal-build
 	dh_auto_install --builddirectory debian/xzdec-build
+	dh_auto_install --builddirectory debian/normal-build
+	dh_auto_install --builddirectory debian/static-build
+	set -e; arch=$$(dpkg-architecture -qDEB_HOST_MULTIARCH); \
+	install -d debian/tmp/lib/$$arch; \
+	mv debian/tmp/usr/lib/$$arch/liblzma.so.* debian/tmp/lib/$$arch/; \
+	dso=$$(basename $$(readlink debian/tmp/usr/lib/$$arch/liblzma.so)); \
+	ln -s -f /lib/$$arch/$$dso debian/tmp/usr/lib/$$arch/liblzma.so
 
 override_dh_installchangelogs:
 	dh_installchangelogs debian/changelog.upstream
@@ -30,11 +43,18 @@ override_dh_installchangelogs:
 build-plain: debian/normal-build/Makefile
 	dh_auto_build --builddirectory debian/normal-build
 
+build-static: debian/static-build/Makefile
+	dh_auto_build --builddirectory debian/static-build
+
 build-small: debian/xzdec-build/Makefile
 	dh_auto_build --builddirectory debian/xzdec-build
 
 debian/test-plain-stamp: | build-plain
 	dh_auto_test --builddirectory debian/normal-build
+	>$@
+
+debian/test-static-stamp: | build-static
+	dh_auto_test --builddirectory debian/static-build
 	>$@
 
 debian/test-xzdec-stamp: | build-small
@@ -44,27 +64,26 @@ debian/test-xzdec-stamp: | build-small
 		check-TESTS
 	>$@
 
-# There are more, but these will do.
-autoreconf_products := $(wildcard Makefile.in */Makefile.in */*/Makefile.in)
-autoreconf_products += configure
-
-autoreconf_sources := $(wildcard Makefile.am */Makefile.am */*/Makefile.am)
-autoreconf_sources += configure.ac
-
-configure_input := $(autoreconf_products)
-configure_input += Doxyfile.in
-configure_input += src/liblzma/liblzma.pc.in
-configure_input += $(wildcard src/scripts/*.in)
-
 debian/normal-build/Makefile debian/normal-build/Doxyfile: $(configure_input)
 	dh_auto_configure --builddirectory debian/normal-build -- \
+		--disable-threads --disable-static \
 		$(opt_optimize) $(opt_quiet) \
 		--disable-xzdec --disable-lzmadec
+
+debian/static-build/Makefile: $(configure_input)
+	dh_auto_configure --builddirectory debian/static-build -- \
+		--disable-threads --disable-shared \
+		--enable-liblzma2-compat \
+		$(opt_optimize) $(opt_quiet) \
+		--disable-lzmainfo --disable-scripts \
+		--disable-xzdec --disable-lzmadec \
+		--disable-xz --disable-lzma-links
 
 debian/xzdec-build/Makefile: $(configure_input)
 	dh_auto_configure --builddirectory debian/xzdec-build -- \
 		--disable-shared --disable-nls --disable-encoders \
 		--enable-small --disable-threads \
+		--disable-liblzma2-compat \
 		$(opt_optimize_small) $(opt_quiet) \
 		--disable-lzmainfo --disable-scripts \
 		--disable-xz --disable-lzma-links
@@ -72,15 +91,15 @@ debian/xzdec-build/Makefile: $(configure_input)
 $(autoreconf_products): $(autoreconf_sources)
 	autoreconf -is
 
-noop: ;
+small_flags_env =
+small_flags_env += DEB_CFLAGS_MAINT_STRIP='-O2 -O3'
+small_flags_env += DEB_CFLAGS_MAINT_PREPEND=-Os
+flags_cmd = dpkg-buildflags --export=configure
+opt_optimize = $(shell $(flags_cmd))
+opt_optimize_small = $(shell $(small_flags_env) $(flags_cmd))
 
-opt_optimize = CFLAGS="-g -O2"
-opt_optimize_small = CFLAGS="-g -Os"
 opt_no_act =
 opt_quiet =
-test_targets =
-test_targets += debian/test-plain-stamp
-test_targets += debian/test-xzdec-stamp
 
 # Unless noopt is set, use optimized CRC32 routine on the Hurd.
 ifeq (hurd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
@@ -96,8 +115,8 @@ ifeq (hurd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
 endif
 
 ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
-    opt_optimize = --disable-assembler CFLAGS="-g -O0"
-    opt_optimize_small = --disable-assembler CFLAGS="-g -O0"
+    opt_optimize += --disable-assembler
+    opt_optimize_small += --disable-assembler
 endif
 
 ifneq (,$(findstring n,$(MAKEFLAGS)))
@@ -109,8 +128,10 @@ ifneq (,$(filter quiet,$(DEB_BUILD_OPTIONS)))
     MAKEFLAGS += --quiet
 endif
 
-ifneq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-    test_targets = noop
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+build-arch:: debian/test-plain-stamp
+build-arch:: debian/test-static-stamp
+build-arch:: debian/test-xzdec-stamp
 endif
 
 # Build a tarball with the latest upstream version.
