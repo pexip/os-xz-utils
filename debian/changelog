@@ -1,3 +1,9 @@
+xz-utils (5.1.1alpha+20110809-3pexip1) pexip; urgency=low
+
+  * Prepare Pexip packaging
+
+ -- John-Mark Bell <jmb@pexip.com>  Wed, 25 Dec 2013 05:28:26 +0000
+
 xz-utils (5.1.1alpha+20110809-3) unstable; urgency=low
 
   * liblzma: Match upstream ABI.
