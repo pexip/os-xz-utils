@@ -13,7 +13,6 @@
 #include "sysdefs.h"
 #include "mythread.h"
 
-#define LZMA_UNSTABLE
 #include "lzma.h"
 
 #include <sys/types.h>
@@ -47,6 +46,7 @@
 #endif
 
 #include "main.h"
+#include "mytime.h"
 #include "coder.h"
 #include "message.h"
 #include "args.h"

@@ -26,6 +26,7 @@ enum format_type opt_format = FORMAT_AUTO;
 bool opt_auto_adjust = true;
 bool opt_single_stream = false;
 uint64_t opt_block_size = 0;
+uint64_t *opt_block_list = NULL;
 
 
 /// Stream used to communicate with liblzma
@@ -42,12 +43,7 @@ static io_buf out_buf;
 static uint32_t filters_count = 0;
 
 /// Number of the preset (0-9)
-static uint32_t preset_number = 6;
-
-/// If a preset is used (no custom filter chain) and preset_extreme is true,
-/// a significantly slower compression is used to achieve slightly better
-/// compression ratio.
-static bool preset_extreme = false;
+static uint32_t preset_number = LZMA_PRESET_DEFAULT;
 
 /// Integrity check type
 static lzma_check check;
@@ -55,7 +51,7 @@ static lzma_check check;
 /// This becomes false if the --check=CHECK option is used.
 static bool check_default = true;
 
-#ifdef HAVE_PTHREAD
+#ifdef MYTHREAD_ENABLED
 static lzma_mt mt_options = {
 	.flags = 0,
 	.timeout = 300,
@@ -73,11 +69,9 @@ coder_set_check(lzma_check new_check)
 }
 
 
-extern void
-coder_set_preset(uint32_t new_preset)
+static void
+forget_filter_chain(void)
 {
-	preset_number = new_preset;
-
 	// Setting a preset makes us forget a possibly defined custom
 	// filter chain.
 	while (filters_count > 0) {
@@ -91,9 +85,20 @@ coder_set_preset(uint32_t new_preset)
 
 
 extern void
+coder_set_preset(uint32_t new_preset)
+{
+	preset_number &= ~LZMA_PRESET_LEVEL_MASK;
+	preset_number |= new_preset;
+	forget_filter_chain();
+	return;
+}
+
+
+extern void
 coder_set_extreme(void)
 {
-	preset_extreme = true;
+	preset_number |= LZMA_PRESET_EXTREME;
+	forget_filter_chain();
 	return;
 }
 
@@ -107,6 +112,12 @@ coder_add_filter(lzma_vli id, void *options)
 	filters[filters_count].id = id;
 	filters[filters_count].options = options;
 	++filters_count;
+
+	// Setting a custom filter chain makes us forget the preset options.
+	// This makes a difference if one specifies e.g. "xz -9 --lzma2 -e"
+	// where the custom filter chain resets the preset level back to
+	// the default 6, making the example equivalent to "xz -6e".
+	preset_number = LZMA_PRESET_DEFAULT;
 
 	return;
 }
@@ -153,9 +164,6 @@ coder_set_compression_settings(void)
 		}
 
 		// Get the preset for LZMA1 or LZMA2.
-		if (preset_extreme)
-			preset_number |= LZMA_PRESET_EXTREME;
-
 		if (lzma_lzma_preset(&opt_lzma, preset_number))
 			message_bug();
 
@@ -187,12 +195,35 @@ coder_set_compression_settings(void)
 	// Print the selected filter chain.
 	message_filters_show(V_DEBUG, filters);
 
+	// The --flush-timeout option requires LZMA_SYNC_FLUSH support
+	// from the filter chain. Currently threaded encoder doesn't support
+	// LZMA_SYNC_FLUSH so single-threaded mode must be used.
+	if (opt_mode == MODE_COMPRESS && opt_flush_timeout != 0) {
+		for (size_t i = 0; i < filters_count; ++i) {
+			switch (filters[i].id) {
+			case LZMA_FILTER_LZMA2:
+			case LZMA_FILTER_DELTA:
+				break;
+
+			default:
+				message_fatal(_("The filter chain is "
+					"incompatible with --flush-timeout"));
+			}
+		}
+
+		if (hardware_threads_get() > 1) {
+			message(V_WARNING, _("Switching to single-threaded "
+					"mode due to --flush-timeout"));
+			hardware_threads_set(1);
+		}
+	}
+
 	// Get the memory usage. Note that if --format=raw was used,
 	// we can be decompressing.
 	const uint64_t memory_limit = hardware_memlimit_get(opt_mode);
 	uint64_t memory_usage;
 	if (opt_mode == MODE_COMPRESS) {
-#ifdef HAVE_PTHREAD
+#ifdef MYTHREAD_ENABLED
 		if (opt_format == FORMAT_XZ && hardware_threads_get() > 1) {
 			mt_options.threads = hardware_threads_get();
 			mt_options.block_size = opt_block_size;
@@ -229,15 +260,15 @@ coder_set_compression_settings(void)
 	if (memory_usage <= memory_limit)
 		return;
 
-	// If --no-auto-adjust was used or we didn't find LZMA1 or
+	// If --no-adjust was used or we didn't find LZMA1 or
 	// LZMA2 as the last filter, give an error immediately.
-	// --format=raw implies --no-auto-adjust.
+	// --format=raw implies --no-adjust.
 	if (!opt_auto_adjust || opt_format == FORMAT_RAW)
 		memlimit_too_small(memory_usage);
 
 	assert(opt_mode == MODE_COMPRESS);
 
-#ifdef HAVE_PTHREAD
+#ifdef MYTHREAD_ENABLED
 	if (opt_format == FORMAT_XZ && mt_options.threads > 1) {
 		// Try to reduce the number of threads before
 		// adjusting the compression settings down.
@@ -400,7 +431,7 @@ coder_init(file_pair *pair)
 			break;
 
 		case FORMAT_XZ:
-#ifdef HAVE_PTHREAD
+#ifdef MYTHREAD_ENABLED
 			if (hardware_threads_get() > 1)
 				ret = lzma_stream_encoder_mt(
 						&strm, &mt_options);
@@ -419,7 +450,15 @@ coder_init(file_pair *pair)
 			break;
 		}
 	} else {
-		uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
+		uint32_t flags = 0;
+
+		// It seems silly to warn about unsupported check if the
+		// check won't be verified anyway due to --ignore-check.
+		if (opt_ignore_check)
+			flags |= LZMA_IGNORE_CHECK;
+		else
+			flags |= LZMA_TELL_UNSUPPORTED_CHECK;
+
 		if (!opt_single_stream)
 			flags |= LZMA_CONCATENATED;
 
@@ -506,6 +545,56 @@ coder_init(file_pair *pair)
 }
 
 
+/// Resolve conflicts between opt_block_size and opt_block_list in single
+/// threaded mode. We want to default to opt_block_list, except when it is
+/// larger than opt_block_size. If this is the case for the current Block
+/// at *list_pos, then we break into smaller Blocks. Otherwise advance
+/// to the next Block in opt_block_list, and break apart if needed.
+static void
+split_block(uint64_t *block_remaining,
+	    uint64_t *next_block_remaining,
+	    size_t *list_pos)
+{
+	if (*next_block_remaining > 0) {
+		// The Block at *list_pos has previously been split up.
+		assert(hardware_threads_get() == 1);
+		assert(opt_block_size > 0);
+		assert(opt_block_list != NULL);
+
+		if (*next_block_remaining > opt_block_size) {
+			// We have to split the current Block at *list_pos
+			// into another opt_block_size length Block.
+			*block_remaining = opt_block_size;
+		} else {
+			// This is the last remaining split Block for the
+			// Block at *list_pos.
+			*block_remaining = *next_block_remaining;
+		}
+
+		*next_block_remaining -= *block_remaining;
+
+	} else {
+		// The Block at *list_pos has been finished. Go to the next
+		// entry in the list. If the end of the list has been reached,
+		// reuse the size of the last Block.
+		if (opt_block_list[*list_pos + 1] != 0)
+			++*list_pos;
+
+		*block_remaining = opt_block_list[*list_pos];
+
+		// If in single-threaded mode, split up the Block if needed.
+		// This is not needed in multi-threaded mode because liblzma
+		// will do this due to how threaded encoding works.
+		if (hardware_threads_get() == 1 && opt_block_size > 0
+				&& *block_remaining > opt_block_size) {
+			*next_block_remaining
+					= *block_remaining - opt_block_size;
+			*block_remaining = opt_block_size;
+		}
+	}
+}
+
+
 /// Compress or decompress using liblzma.
 static bool
 coder_normal(file_pair *pair)
@@ -522,23 +611,56 @@ coder_normal(file_pair *pair)
 	// Assume that something goes wrong.
 	bool success = false;
 
-	// block_remaining indicates how many input bytes to encode until
+	// block_remaining indicates how many input bytes to encode before
 	// finishing the current .xz Block. The Block size is set with
-	// --block-size=SIZE. It has an effect only when compressing
-	// to the .xz format. If block_remaining == UINT64_MAX, only
-	// a single block is created.
+	// --block-size=SIZE and --block-list. They have an effect only when
+	// compressing to the .xz format. If block_remaining == UINT64_MAX,
+	// only a single block is created.
 	uint64_t block_remaining = UINT64_MAX;
-	if (hardware_threads_get() == 1 && opt_mode == MODE_COMPRESS
-			&& opt_format == FORMAT_XZ && opt_block_size > 0)
-		block_remaining = opt_block_size;
+
+	// next_block_remining for when we are in single-threaded mode and
+	// the Block in --block-list is larger than the --block-size=SIZE.
+	uint64_t next_block_remaining = 0;
+
+	// Position in opt_block_list. Unused if --block-list wasn't used.
+	size_t list_pos = 0;
+
+	// Handle --block-size for single-threaded mode and the first step
+	// of --block-list.
+	if (opt_mode == MODE_COMPRESS && opt_format == FORMAT_XZ) {
+		// --block-size doesn't do anything here in threaded mode,
+		// because the threaded encoder will take care of splitting
+		// to fixed-sized Blocks.
+		if (hardware_threads_get() == 1 && opt_block_size > 0)
+			block_remaining = opt_block_size;
+
+		// If --block-list was used, start with the first size.
+		//
+		// For threaded case, --block-size specifies how big Blocks
+		// the encoder needs to be prepared to create at maximum
+		// and --block-list will simultaneously cause new Blocks
+		// to be started at specified intervals. To keep things
+		// logical, the same is done in single-threaded mode. The
+		// output is still not identical because in single-threaded
+		// mode the size info isn't written into Block Headers.
+		if (opt_block_list != NULL) {
+			if (block_remaining < opt_block_list[list_pos]) {
+				assert(hardware_threads_get() == 1);
+				next_block_remaining = opt_block_list[list_pos]
+						- block_remaining;
+			} else {
+				block_remaining = opt_block_list[list_pos];
+			}
+		}
+	}
 
 	strm.next_out = out_buf.u8;
 	strm.avail_out = IO_BUFFER_SIZE;
 
 	while (!user_abort) {
-		// Fill the input buffer if it is empty and we haven't reached
-		// end of file yet.
-		if (strm.avail_in == 0 && !pair->src_eof) {
+		// Fill the input buffer if it is empty and we aren't
+		// flushing or finishing.
+		if (strm.avail_in == 0 && action == LZMA_RUN) {
 			strm.next_in = in_buf.u8;
 			strm.avail_in = io_read(pair, &in_buf,
 					my_min(block_remaining,
@@ -555,8 +677,11 @@ coder_normal(file_pair *pair)
 				// opt_block_size bytes of input.
 				block_remaining -= strm.avail_in;
 				if (block_remaining == 0)
-					action = LZMA_FULL_FLUSH;
+					action = LZMA_FULL_BARRIER;
 			}
+
+			if (action == LZMA_RUN && flush_needed)
+				action = LZMA_SYNC_FLUSH;
 		}
 
 		// Let liblzma do the actual work.
@@ -572,10 +697,37 @@ coder_normal(file_pair *pair)
 			strm.avail_out = IO_BUFFER_SIZE;
 		}
 
-		if (ret == LZMA_STREAM_END && action == LZMA_FULL_FLUSH) {
-			// Start a new Block.
+		if (ret == LZMA_STREAM_END && (action == LZMA_SYNC_FLUSH
+				|| action == LZMA_FULL_BARRIER)) {
+			if (action == LZMA_SYNC_FLUSH) {
+				// Flushing completed. Write the pending data
+				// out immediatelly so that the reading side
+				// can decompress everything compressed so far.
+				if (io_write(pair, &out_buf, IO_BUFFER_SIZE
+						- strm.avail_out))
+					break;
+
+				strm.next_out = out_buf.u8;
+				strm.avail_out = IO_BUFFER_SIZE;
+
+				// Set the time of the most recent flushing.
+				mytime_set_flush_time();
+			} else {
+				// Start a new Block after LZMA_FULL_BARRIER.
+				if (opt_block_list == NULL) {
+					assert(hardware_threads_get() == 1);
+					assert(opt_block_size > 0);
+					block_remaining = opt_block_size;
+				} else {
+					split_block(&block_remaining,
+							&next_block_remaining,
+							&list_pos);
+				}
+			}
+
+			// Start a new Block after LZMA_FULL_FLUSH or continue
+			// the same block after LZMA_SYNC_FLUSH.
 			action = LZMA_RUN;
-			block_remaining = opt_block_size;
 
 		} else if (ret != LZMA_OK) {
 			// Determine if the return value indicates that we
@@ -727,6 +879,11 @@ coder_run(const char *filename)
 			// Don't open the destination file when --test
 			// is used.
 			if (opt_mode == MODE_TEST || !io_open_dest(pair)) {
+				// Remember the current time. It is needed
+				// for progress indicator and for timed
+				// flushing.
+				mytime_set_start_time();
+
 				// Initialize the progress indicator.
 				const uint64_t in_size
 						= pair->src_st.st_size <= 0
