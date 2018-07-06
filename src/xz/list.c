@@ -230,6 +230,20 @@ parse_indexes(xz_file_info *xfi, file_pair *pair)
 			goto error;
 		}
 
+		// Check that the Stream Footer doesn't specify something
+		// that we don't support. This can only happen if the xz
+		// version is older than liblzma and liblzma supports
+		// something new.
+		//
+		// It is enough to check Stream Footer. Stream Header must
+		// match when it is compared against Stream Footer with
+		// lzma_stream_flags_compare().
+		if (footer_flags.version != 0) {
+			message_error("%s: %s", pair->src_name,
+					message_strm(LZMA_OPTIONS_ERROR));
+			goto error;
+		}
+
 		// Check that the size of the Index field looks sane.
 		lzma_vli index_size = footer_flags.backward_size;
 		if ((lzma_vli)(pos) < index_size + LZMA_STREAM_HEADER_SIZE) {
@@ -456,7 +470,19 @@ parse_block_header(file_pair *pair, const lzma_index_iter *iter,
 	switch (lzma_block_compressed_size(&block,
 			iter->block.unpadded_size)) {
 	case LZMA_OK:
-		break;
+		// Validate also block.uncompressed_size if it is present.
+		// If it isn't present, there's no need to set it since
+		// we aren't going to actually decompress the Block; if
+		// we were decompressing, then we should set it so that
+		// the Block decoder could validate the Uncompressed Size
+		// that was stored in the Index.
+		if (block.uncompressed_size == LZMA_VLI_UNKNOWN
+				|| block.uncompressed_size
+					== iter->block.uncompressed_size)
+			break;
+
+		// If the above fails, the file is corrupt so
+		// LZMA_DATA_ERROR is a good error code.
 
 	case LZMA_DATA_ERROR:
 		// Free the memory allocated by lzma_block_header_decode().
@@ -482,7 +508,7 @@ parse_block_header(file_pair *pair, const lzma_index_iter *iter,
 	// Determine the minimum XZ Utils version that supports this Block.
 	//
 	// Currently the only thing that 5.0.0 doesn't support is empty
-	// LZMA2 Block. This bug was fixed in 5.0.3.
+	// LZMA2 Block. This decoder bug was fixed in 5.0.2.
 	{
 		size_t i = 0;
 		while (filters[i + 1].id != LZMA_VLI_UNKNOWN)
@@ -490,8 +516,8 @@ parse_block_header(file_pair *pair, const lzma_index_iter *iter,
 
 		if (filters[i].id == LZMA_FILTER_LZMA2
 				&& iter->block.uncompressed_size == 0
-				&& xfi->min_version < 50000032U)
-			xfi->min_version = 50000032U;
+				&& xfi->min_version < 50000022U)
+			xfi->min_version = 50000022U;
 	}
 
 	// Convert the filter chain to human readable form.
