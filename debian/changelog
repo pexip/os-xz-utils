@@ -1,3 +1,9 @@
+xz-utils (5.2.2-1.2pexip1) pexip; urgency=medium
+
+  * Migrate to Stretch
+
+ -- John-Mark Bell <jmb@pexip.com>  Tue, 10 Jul 2018 11:56:37 +0000
+
 xz-utils (5.2.2-1.2) unstable; urgency=medium
 
   * Non-maintainer upload.
