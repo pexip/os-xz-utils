@@ -289,8 +289,12 @@ lzma_decode(lzma_coder *restrict coder, lzma_dict *restrict dictptr,
 	// Initialization //
 	////////////////////
 
-	if (!rc_read_init(&coder->rc, in, in_pos, in_size))
-		return LZMA_OK;
+	{
+		const lzma_ret ret = rc_read_init(
+				&coder->rc, in, in_pos, in_size);
+		if (ret != LZMA_STREAM_END)
+			return ret;
+	}
 
 	///////////////
 	// Variables //
@@ -933,7 +937,7 @@ lzma_decoder_reset(lzma_coder *coder, const void *opt)
 
 
 extern lzma_ret
-lzma_lzma_decoder_create(lzma_lz_decoder *lz, lzma_allocator *allocator,
+lzma_lzma_decoder_create(lzma_lz_decoder *lz, const lzma_allocator *allocator,
 		const void *opt, lzma_lz_options *lz_options)
 {
 	if (lz->coder == NULL) {
@@ -961,7 +965,7 @@ lzma_lzma_decoder_create(lzma_lz_decoder *lz, lzma_allocator *allocator,
 /// initialization (lzma_lzma_decoder_init() passes function pointer to
 /// the LZ initialization).
 static lzma_ret
-lzma_decoder_init(lzma_lz_decoder *lz, lzma_allocator *allocator,
+lzma_decoder_init(lzma_lz_decoder *lz, const lzma_allocator *allocator,
 		const void *options, lzma_lz_options *lz_options)
 {
 	if (!is_lclppb_valid(options))
@@ -978,7 +982,7 @@ lzma_decoder_init(lzma_lz_decoder *lz, lzma_allocator *allocator,
 
 
 extern lzma_ret
-lzma_lzma_decoder_init(lzma_next_coder *next, lzma_allocator *allocator,
+lzma_lzma_decoder_init(lzma_next_coder *next, const lzma_allocator *allocator,
 		const lzma_filter_info *filters)
 {
 	// LZMA can only be the last filter in the chain. This is enforced
@@ -1025,7 +1029,7 @@ lzma_lzma_decoder_memusage(const void *options)
 
 
 extern lzma_ret
-lzma_lzma_props_decode(void **options, lzma_allocator *allocator,
+lzma_lzma_props_decode(void **options, const lzma_allocator *allocator,
 		const uint8_t *props, size_t props_size)
 {
 	if (props_size != 5)

@@ -32,8 +32,6 @@
 
 #define LZMA_API(type) LZMA_API_EXPORT type LZMA_API_CALL
 
-#define LZMA_UNSTABLE
-
 #include "lzma.h"
 
 // These allow helping the compiler in some often-executed branches, whose
@@ -75,7 +73,12 @@
 	( LZMA_TELL_NO_CHECK \
 	| LZMA_TELL_UNSUPPORTED_CHECK \
 	| LZMA_TELL_ANY_CHECK \
+	| LZMA_IGNORE_CHECK \
 	| LZMA_CONCATENATED )
+
+
+/// Largest valid lzma_action value as unsigned integer.
+#define LZMA_ACTION_MAX ((unsigned int)(LZMA_FULL_BARRIER))
 
 
 /// Special return value (lzma_ret) to indicate that a timeout was reached
@@ -96,7 +99,7 @@ typedef struct lzma_filter_info_s lzma_filter_info;
 
 /// Type of a function used to initialize a filter encoder or decoder
 typedef lzma_ret (*lzma_init_function)(
-		lzma_next_coder *next, lzma_allocator *allocator,
+		lzma_next_coder *next, const lzma_allocator *allocator,
 		const lzma_filter_info *filters);
 
 /// Type of a function to do some kind of coding work (filters, Stream,
@@ -104,7 +107,7 @@ typedef lzma_ret (*lzma_init_function)(
 /// input and output buffers, but for simplicity they still use this same
 /// function prototype.
 typedef lzma_ret (*lzma_code_function)(
-		lzma_coder *coder, lzma_allocator *allocator,
+		lzma_coder *coder, const lzma_allocator *allocator,
 		const uint8_t *restrict in, size_t *restrict in_pos,
 		size_t in_size, uint8_t *restrict out,
 		size_t *restrict out_pos, size_t out_size,
@@ -112,7 +115,7 @@ typedef lzma_ret (*lzma_code_function)(
 
 /// Type of a function to free the memory allocated for the coder
 typedef void (*lzma_end_function)(
-		lzma_coder *coder, lzma_allocator *allocator);
+		lzma_coder *coder, const lzma_allocator *allocator);
 
 
 /// Raw coder validates and converts an array of lzma_filter structures to
@@ -155,6 +158,11 @@ struct lzma_next_coder_s {
 	/// lzma_next_coder.coder.
 	lzma_end_function end;
 
+	/// Pointer to a function to get progress information. If this is NULL,
+	/// lzma_stream.total_in and .total_out are used instead.
+	void (*get_progress)(lzma_coder *coder,
+			uint64_t *progress_in, uint64_t *progress_out);
+
 	/// Pointer to function to return the type of the integrity check.
 	/// Most coders won't support this.
 	lzma_check (*get_check)(const lzma_coder *coder);
@@ -166,7 +174,7 @@ struct lzma_next_coder_s {
 
 	/// Update the filter-specific options or the whole filter chain
 	/// in the encoder.
-	lzma_ret (*update)(lzma_coder *coder, lzma_allocator *allocator,
+	lzma_ret (*update)(lzma_coder *coder, const lzma_allocator *allocator,
 			const lzma_filter *filters,
 			const lzma_filter *reversed_filters);
 };
@@ -180,6 +188,7 @@ struct lzma_next_coder_s {
 		.id = LZMA_VLI_UNKNOWN, \
 		.code = NULL, \
 		.end = NULL, \
+		.get_progress = NULL, \
 		.get_check = NULL, \
 		.memconfig = NULL, \
 		.update = NULL, \
@@ -201,6 +210,7 @@ struct lzma_internal_s {
 		ISEQ_SYNC_FLUSH,
 		ISEQ_FULL_FLUSH,
 		ISEQ_FINISH,
+		ISEQ_FULL_BARRIER,
 		ISEQ_END,
 		ISEQ_ERROR,
 	} sequence;
@@ -211,7 +221,7 @@ struct lzma_internal_s {
 	size_t avail_in;
 
 	/// Indicates which lzma_action values are allowed by next.code.
-	bool supported_actions[4];
+	bool supported_actions[LZMA_ACTION_MAX + 1];
 
 	/// If true, lzma_code will return LZMA_BUF_ERROR if no progress was
 	/// made (no input consumed and no output produced by next.code).
@@ -220,11 +230,17 @@ struct lzma_internal_s {
 
 
 /// Allocates memory
-extern void *lzma_alloc(size_t size, lzma_allocator *allocator)
+extern void *lzma_alloc(size_t size, const lzma_allocator *allocator)
 		lzma_attribute((__malloc__)) lzma_attr_alloc_size(1);
 
+/// Allocates memory and zeroes it (like calloc()). This can be faster
+/// than lzma_alloc() + memzero() while being backward compatible with
+/// custom allocators.
+extern void * lzma_attribute((__malloc__)) lzma_attr_alloc_size(1)
+		lzma_alloc_zero(size_t size, const lzma_allocator *allocator);
+
 /// Frees memory
-extern void lzma_free(void *ptr, lzma_allocator *allocator);
+extern void lzma_free(void *ptr, const lzma_allocator *allocator);
 
 
 /// Allocates strm->internal if it is NULL, and initializes *strm and
@@ -236,17 +252,19 @@ extern lzma_ret lzma_strm_init(lzma_stream *strm);
 /// than the filter being initialized now. This way the actual filter
 /// initialization functions don't need to use lzma_next_coder_init macro.
 extern lzma_ret lzma_next_filter_init(lzma_next_coder *next,
-		lzma_allocator *allocator, const lzma_filter_info *filters);
+		const lzma_allocator *allocator,
+		const lzma_filter_info *filters);
 
 /// Update the next filter in the chain, if any. This checks that
 /// the application is not trying to change the Filter IDs.
 extern lzma_ret lzma_next_filter_update(
-		lzma_next_coder *next, lzma_allocator *allocator,
+		lzma_next_coder *next, const lzma_allocator *allocator,
 		const lzma_filter *reversed_filters);
 
 /// Frees the memory allocated for next->coder either using next->end or,
 /// if next->end is NULL, using lzma_free.
-extern void lzma_next_end(lzma_next_coder *next, lzma_allocator *allocator);
+extern void lzma_next_end(lzma_next_coder *next,
+		const lzma_allocator *allocator);
 
 
 /// Copy as much data as possible from in[] to out[] and update *in_pos
