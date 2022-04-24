@@ -1,10 +1,10 @@
 #!/usr/bin/make -f
 
-build clean install binary-arch binary-indep binary:
+%:
 	+dh $@ --parallel $(opt_no_act)
 
 # Runs tests, too, if and only if nocheck is unset (see below).
-build-arch:: build-plain build-static build-small
+build-arch: build-plain build-static build-small
 
 build-indep: debian/normal-build/Makefile
 	cd debian/normal-build && doxygen Doxyfile
@@ -133,9 +133,9 @@ ifneq (,$(filter quiet,$(DEB_BUILD_OPTIONS)))
 endif
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-build-arch:: debian/test-plain-stamp
-build-arch:: debian/test-static-stamp
-build-arch:: debian/test-xzdec-stamp
+build-arch: debian/test-plain-stamp
+build-arch: debian/test-static-stamp
+build-arch: debian/test-xzdec-stamp
 endif
 
 # Build a tarball with the latest upstream version.
