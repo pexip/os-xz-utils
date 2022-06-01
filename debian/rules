@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 %:
-	+dh $@ --parallel $(opt_no_act)
+	dh $@ --parallel $(opt_no_act)
 
 # Runs tests, too, if and only if nocheck is unset (see below).
 build-arch: build-plain build-static build-small
@@ -74,7 +74,7 @@ debian/normal-build/Makefile debian/normal-build/Doxyfile: $(configure_input)
 debian/static-build/Makefile: $(configure_input)
 	dh_auto_configure --builddirectory debian/static-build -- \
 		$(opt_reproduce) \
-		--disable-threads --disable-shared \
+		--enable-threads --disable-shared \
 		--enable-liblzma2-compat \
 		$(opt_optimize) $(opt_quiet) \
 		--disable-lzmainfo --disable-scripts \
@@ -92,7 +92,7 @@ debian/xzdec-build/Makefile: $(configure_input)
 		--disable-xz --disable-lzma-links
 
 $(autoreconf_products): $(autoreconf_sources)
-	autoreconf -is
+	autoreconf -if
 
 small_flags_env =
 small_flags_env += DEB_CFLAGS_MAINT_STRIP='-O2 -O3'

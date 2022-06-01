@@ -1,3 +1,48 @@
+xz-utils (5.2.5-2.1~deb11u1) bullseye-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Rebuild for bullseye-security.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 11 Apr 2022 16:36:49 +0200
+
+xz-utils (5.2.5-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * xzgrep: Fix escaping of malicious filenames (ZDI-CAN-16587)
+    (CVE-2022-1271) (Closes: #1009167)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sun, 10 Apr 2022 13:31:29 +0200
+
+xz-utils (5.2.5-2) unstable; urgency=medium
+
+  * Non-maintainer upload (Closes: #983067).
+  * Upload to unstable.
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Mon, 08 Mar 2021 23:01:54 +0100
+
+xz-utils (5.2.5-1.1) experimental; urgency=medium
+
+  * Non-maintainer upload.
+  * Update the patches for #844770 and #975981 to what upstream applied.
+  * Add a SIGPIPE fix to xzgrep (similar to xzcmp in #844770).
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Tue, 02 Mar 2021 21:50:25 +0100
+
+xz-utils (5.2.5-1.0) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * New upstream release (Closes: #975984).
+    - Increase GETTEXT version (Closes: #959999).
+  * Add % target to the rules file to work with newer debhelper
+    (Closes: #945961).
+  * Enable threads for static builds (Closes: #907449).
+  * Ignore SIGPIPE in xzdiff script (Closes: #844770).
+  * Teach xzgrep about zstd (Closes: #970891).
+  * Clean up the xz man page (Closes: #894454).
+  * Ignore hard link count if input is not deleted (Closes: #975981).
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Mon, 28 Dec 2020 11:25:06 +0100
+
 xz-utils (5.2.4-1+deb10u1pexip1) pexip; urgency=medium
 
   * New upstream release
@@ -5,14 +50,6 @@ xz-utils (5.2.4-1+deb10u1pexip1) pexip; urgency=medium
     debian/rules. (see Debian bug 945961)
 
  -- Steve McIntyre <steve.mcintyre@pexip.com>  Sun, 24 Apr 2022 18:24:59 +0100
-
-xz-utils (5.2.4-1+deb10u1) buster-security; urgency=high
-
-  * Non-maintainer upload by the Security Team.
-  * xzgrep: Fix escaping of malicious filenames (ZDI-CAN-16587)
-    (CVE-2022-1271) (Closes: #1009167)
-
- -- Salvatore Bonaccorso <carnil@debian.org>  Mon, 11 Apr 2022 16:51:17 +0200
 
 xz-utils (5.2.4-1pexip2) pexip; urgency=medium
 
