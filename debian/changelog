@@ -1,3 +1,9 @@
+xz-utils (5.2.5repack-2.1~deb11u1pexip4) pexip-bullseye; urgency=medium
+
+  * Bullseye rebuild for ARM64 inclusion
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Mon, 05 Sep 2022 10:36:17 +0100
+
 xz-utils (5.2.5repack-2.1~deb11u1pexip3) pexip-bullseye; urgency=medium
 
   * Repack xz-utils upstream tarball to allow pristine-tar to import it.
