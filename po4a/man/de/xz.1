@@ -10,7 +10,7 @@
 .\" This file was generated with po4a. Translate the source file.
 .\"
 .\"*******************************************************************
-.TH XZ 1 "1. Februar 2020" Tukaani XZ\-Dienstprogramme
+.TH XZ 1 "1. Dezember 2022" Tukaani XZ\-Dienstprogramme
 .
 .SH BEZEICHNUNG
 xz, unxz, xzcat, lzma, unlzma, lzcat \- .xz\- und .lzma\-Dateien komprimieren
@@ -39,7 +39,8 @@ anstelle der Namen \fBunxz\fP und \fBxzcat\fP verwenden.
 Befehlszeilensyntax denen von \fBgzip\fP(1) und \fBbzip2\fP(1) ähnelt. Das native
 Dateiformat ist das \fB.xz\fP\-Format, aber das veraltete, von den
 LZMA\-Dienstprogrammen verwendete Format sowie komprimierte Rohdatenströme
-ohne Containerformat\-Header werden ebenfalls unterstützt.
+ohne Containerformat\-Header werden ebenfalls unterstützt. Außerdem wird die
+Dekompression des von \fBlzip\fP verwendeten \fB.lz\fP\-Formats unterstützt.
 .PP
 \fBxz\fP komprimiert oder dekomprimierte jede \fIDatei\fP entsprechend des
 gewählten Vorgangsmodus. Falls entweder \fB\-\fP oder keine Datei angegeben ist,
@@ -58,9 +59,9 @@ Bei der Kompression wird das Suffix des Formats der Zieldatei (\fB.xz\fP oder
 \&\fB.lzma\fP) an den Namen der Quelldatei angehängt und so der Name der
 Zieldatei gebildet.
 .IP \(bu 3
-Bei der Dekompression wird das Suffix \fB.xz\fP oder \fB.lzma\fP vom Dateinamen
-entfernt und so der Name der Zieldatei gebildet. Außerdem erkennt \fBxz\fP die
-Suffixe \fB.txz\fP und \fB.tlz\fP und ersetzt diese durch \fB.tar\fP.
+Bei der Dekompression wird das Suffix \fB.xz\fP, \fB.lzma\fP oder \fB.lz\fP vom
+Dateinamen entfernt und so der Name der Zieldatei gebildet. Außerdem erkennt
+\fBxz\fP die Suffixe \fB.txz\fP und \fB.tlz\fP und ersetzt diese durch \fB.tar\fP.
 .PP
 Wenn die Zieldatei bereits existiert, wird eine Fehlermeldung angezeigt und
 die \fIDatei\fP übersprungen.
@@ -83,7 +84,7 @@ das \fB.xz\fP\-Format und \fB.lzma\fP oder \fB.tlz\fP beim Komprimieren in das
 .IP \(bu 3
 Der Aktionsmodus wird auf Dekompression gesetzt und die \fIDatei\fP hat nicht
 das Suffix eines der unterstützten Zieldateiformate (\fB.xz\fP, \fB.txz\fP,
-\&\fB.lzma\fP oder \fB.tlz\fP).
+\&\fB.lzma\fP, \fB.tlz\fP oder \fB.lz\fP).
 .PP
 Nach erfolgreicher Kompression oder Dekompression der \fIDatei\fP kopiert \fBxz\fP
 Eigentümer, Gruppe, Zugriffsrechte, Zugriffszeit und Änderungszeit aus der
@@ -97,7 +98,7 @@ unterstützt.
 Sobald die Zieldatei erfolgreich geschlossen wurde, wird die
 Ursprungs\-\fIDatei\fP entfernt. Dies wird durch die Option \fB\-\-keep\fP
 verhindert. Die Ursprungs\-\fIDatei\fP wird niemals entfernt, wenn die Ausgabe
-in die Standardausgabe geschrieben wird.
+in die Standardausgabe geschrieben wird oder falls ein Fehler auftritt.
 .PP
 Durch Senden der Signale \fBSIGINFO\fP oder \fBSIGUSR1\fP an den \fBxz\fP\-Prozess
 werden Fortschrittsinformationen in den Fehlerkanal der Standardausgabe
@@ -107,7 +108,7 @@ automatisch aktualisierter Fortschrittsanzeiger angezeigt.
 .
 .SS Speicherbedarf
 In Abhängigkeit von den gewählten Kompressionseinstellungen bewegt sich der
-Speicherverbrauch zwischen wenigen hundert Kilobyte und mehrere
+Speicherverbrauch zwischen wenigen hundert Kilobyte und mehreren
 Gigabyte. Die Einstellungen bei der Kompression einer Datei bestimmen dabei
 den Speicherbedarf bei der Dekompression. Die Dekompression benötigt
 üblicherweise zwischen 5\ % und 20\ % des Speichers, der bei der Kompression
@@ -227,6 +228,12 @@ Ausgabe gewünscht ist, dann sollten Sie \fB\-\-robot \-\-list\fP verwenden.
 .TP 
 \fB\-k\fP, \fB\-\-keep\fP
 verhindert das Löschen der Eingabedateien.
+.IP ""
+Seit der \fBxz\fP\-Version 5.2.6 wird die Kompression oder Dekompression auch
+dann ausgeführt, wenn die Eingabe ein symbolischer Link zu einer regulären
+Datei ist, mehr als einen harten Link hat oder das »setuid«\-, »setgid«\- oder
+»sticky«\-Bit gesetzt ist. Die genannten Bits werden nicht in die Zieldatei
+kopiert. In früheren Versionen geschah dies nur mit \fB\-\-force\fP.
 .TP 
 \fB\-f\fP, \fB\-\-force\fP
 Diese Option hat verschiedene Auswirkungen:
@@ -285,7 +292,7 @@ wird und die Quelldatei bereits das Suffix \fI.suf\fP hat, wird eine Warnung
 angezeigt und die Datei übersprungen.
 .IP ""
 berücksichtigt bei der Dekompression zusätzlich zu Dateien mit den Suffixen
-\&\fB.xz\fP, \fB.txz\fP, \fB.lzma\fP oder \fB.tlz\fP auch jene mit dem Suffix
+\&\fB.xz\fP, \fB.txz\fP, \fB.lzma\fP, \fB.tlz\fP oder \fB.lz\fP auch jene mit dem Suffix
 \&\fI.suf\fP. Falls die Quelldatei das Suffix \fI.suf\fP hat, wird dieses entfernt
 und so der Name der Zieldatei abgeleitet.
 .IP ""
@@ -327,6 +334,23 @@ Die Kompression erfolgt in das \fB.xz\fP\-Dateiformat oder akzeptiert nur
 Die Kompression erfolgt in das veraltete \fB.lzma\fP\-Dateiformat oder
 akzeptiert nur \fB.lzma\fP\-Dateien bei der Dekompression. Der alternative Name
 \fBalone\fP dient der Abwärtskompatibilität zu den LZMA\-Dienstprogrammen.
+.TP 
+\fBlzip\fP
+Akzeptiert nur \fB.lz\fP\-Dateien bei der Dekompression. Kompression wird nicht
+unterstützt.
+.IP ""
+Das \fB.lz\fP\-Format wird in Version 0 und der unerweiterten Version 1
+unterstützt. Dateien der Version 0 wurden \fBlzip\fP 1.3 und älter
+erstellt. Solche Dateien sind nicht sehr weit verbreitet, können aber in
+Dateiarchiven gefunden werden, da einige Quellpakete in diesem Format
+veröffentlicht wurden. Es ist auch möglich, dass Benutzer alte persönliche
+Dateien in diesem Format haben. Die Dekompressionsunterstützung für das
+Format der Version 0 wurde mit der Version 1.18 aus \fBlzip\fP entfernt.
+.IP ""
+\fBlzip\fP\-Versionen ab 1.4 erstellen Dateien im Format der Version 0. Die
+Erweiterung »Sync Flush Marker« zur Formatversion 1 wurde in \fBlzip\fP 1.6
+hinzugefügt. Diese Erweiterung wird sehr selten verwendet und wird von \fBxz\fP
+nicht unterstützt (die Eingabe wird als beschädigt erkannt).
 .TP 
 \fBraw\fP
 Komprimiert oder dekomprimiert einen Rohdatenstrom (ohne Header). Diese
@@ -396,8 +420,7 @@ Die Unterschiede zwischen den Voreinstellungsstufen sind deutlicher als bei
 \fBgzip\fP(1) und \fBbzip2\fP(1). Die gewählten Kompressionseinstellungen
 bestimmen den Speicherbedarf bei der Dekompression, daher ist es auf älteren
 Systemen mit wenig Speicher bei einer zu hoch gewählten Voreinstellung
-schwer, eine Datei zu dekomprimieren. Insbesondere \fBist es keine gute Idee,
-blindlings \-9 für alles\fP zu verwenden, wie dies häufig mit \fBgzip\fP(1) und
+schwer, eine Datei zu dekomprimieren. Insbesondere \fBist es keine gute Idee, blindlings \-9 für alles\fP zu verwenden, wie dies häufig mit \fBgzip\fP(1) und
 \fBbzip2\fP(1) gehandhabt wird.
 .RS
 .TP 
@@ -412,10 +435,10 @@ komprimierenden Daten abhängig ist.
 \fB\-4\fP … \fB\-6\fP
 Gute bis sehr gute Kompression, wobei der Speicherbedarf für die
 Dekompression selbst auf alten Systemen akzeptabel ist. \fB\-6\fP ist die
-Voreinstellung, welche üblicherweise eine gute Wahl ist, zum Beispiel für
-die Verteilung von Dateien, die selbst noch auf Systemen mit nur 16\ MiB
-Arbeitsspeicher dekomprimiert werden müssen (\fB\-5e\fP oder \fB\-6e\fP sind
-ebenfalls eine Überlegung wert. Siehe \fB\-\-extreme\fP).
+Voreinstellung, welche üblicherweise eine gute Wahl für die Verteilung von
+Dateien ist, die selbst noch auf Systemen mit nur 16\ MiB Arbeitsspeicher
+dekomprimiert werden müssen (\fB\-5e\fP oder \fB\-6e\fP sind ebenfalls eine
+Überlegung wert. Siehe \fB\-\-extreme\fP).
 .TP 
 \fB\-7 … \-9\fP
 Ähnlich wie \fB\-6\fP, aber mit einem höheren Speicherbedarf für die Kompression
@@ -437,7 +460,7 @@ Die folgende Tabelle fasst die Eigenschaften der Voreinstellungen zusammen:
 tab(;);
 c c c c c
 n n n n n.
-Voreinstellung;DictGröße;KompCPU;KompSpeicher;DekSpeicher
+Voreinst.;Wörtb.Gr;KomprCPU;KompSpeich;DekompSpeich
 \-0;256 KiB;0;3 MiB;1 MiB
 \-1;1 MiB;1;9 MiB;2 MiB
 \-2;2 MiB;2;17 MiB;3 MiB
@@ -455,26 +478,26 @@ Voreinstellung;DictGröße;KompCPU;KompSpeicher;DekSpeicher
 Spaltenbeschreibungen:
 .RS
 .IP \(bu 3
-DictGröße ist die Größe des LZMA2\-Wörterbuchs. Es ist Speicherverschwendung,
-ein Wörterbuch zu verwenden, das größer als die unkomprimierte Datei
-ist. Daher ist es besser, die Voreinstellungen \fB\-7\fP … \fB\-9\fP zu vermeiden,
-falls es keinen wirklichen Bedarf dafür gibt. Mit \fB\-6\fP und weniger wird
-üblicherweise so wenig Speicher verschwendet, dass dies nicht ins Gewicht
-fällt.
+Wörtb.Größe ist die Größe des LZMA2\-Wörterbuchs. Es ist
+Speicherverschwendung, ein Wörterbuch zu verwenden, das größer als die
+unkomprimierte Datei ist. Daher ist es besser, die Voreinstellungen \fB\-7\fP …
+\fB\-9\fP zu vermeiden, falls es keinen wirklichen Bedarf dafür gibt. Mit \fB\-6\fP
+und weniger wird üblicherweise so wenig Speicher verschwendet, dass dies
+nicht ins Gewicht fällt.
 .IP \(bu 3
-KompCPU ist eine vereinfachte Repräsentation der LZMA2\-Einstellungen, welche
-die Kompressionsgeschwindigkeit beeinflussen. Die Wörterbuchgröße wirkt sich
-ebenfalls auf die Geschwindigkeit aus. Während KompCPU für die Stufen \fB\-6\fP
-bis \fB\-9\fP gleich ist, tendieren höhere Stufen dazu, etwas langsamer zu
-sein. Um eine noch langsamere, aber möglicherweise bessere Kompression zu
-erhalten, siehe \fB\-\-extreme\fP.
+KomprCPU ist eine vereinfachte Repräsentation der LZMA2\-Einstellungen,
+welche die Kompressionsgeschwindigkeit beeinflussen. Die Wörterbuchgröße
+wirkt sich ebenfalls auf die Geschwindigkeit aus. Während KompCPU für die
+Stufen \fB\-6\fP bis \fB\-9\fP gleich ist, tendieren höhere Stufen dazu, etwas
+langsamer zu sein. Um eine noch langsamere, aber möglicherweise bessere
+Kompression zu erhalten, siehe \fB\-\-extreme\fP.
 .IP \(bu 3
-KompSpeicher enthält den Speicherbedarf des Kompressors im
+KompSpeich enthält den Speicherbedarf des Kompressors im
 Einzel\-Thread\-Modus. Dieser kann zwischen den \fBxz\fP\-Versionen leicht
 variieren. Der Speicherbedarf einiger der zukünftigen Multithread\-Modi kann
 dramatisch höher sein als im Einzel\-Thread\-Modus.
 .IP \(bu 3
-DekSpeicher enthält den Speicherbedarf für die Dekompression. Das bedeutet,
+DekompSpeich enthält den Speicherbedarf für die Dekompression. Das bedeutet,
 dass die Kompressionseinstellungen den Speicherbedarf bei der Dekompression
 bestimmen. Der exakte Speicherbedarf bei der Dekompression ist geringfügig
 größer als die Größe des LZMA2\-Wörterbuchs, aber die Werte in der Tabelle
@@ -487,7 +510,7 @@ Kompressions\-Voreinstellungsstufe (\fB\-0\fP … \fB\-9\fP), um hoffentlich ein
 besseres Kompressionsverhältnis zu erreichen, das aber in ungünstigen Fällen
 auch schlechter werden kann. Der Speicherverbrauch bei der Dekompression
 wird dabei nicht beeinflusst, aber der Speicherverbrauch der Kompression
-steigt in der Voreinstellungsstufen \fB\-0\fP bis \fB\-3\fP geringfügig an.
+steigt in den Voreinstellungsstufen \fB\-0\fP bis \fB\-3\fP geringfügig an.
 .IP ""
 Da es zwei Voreinstellungen mit den Wörterbuchgrößen 4\ MiB und 8\ MiB gibt,
 verwenden die Voreinstellungsstufen \fB\-3e\fP und \fB\-5e\fP etwas schnellere
@@ -500,7 +523,7 @@ diese Weise sind zwei Voreinstellungen nie identisch.
 tab(;);
 c c c c c
 n n n n n.
-Voreinstellung;DictGröße;KompCPU;KompSpeicher;DekSpeicher
+Voreinst.;Wörtb.Gr;KomprCPU;KompSpeich;DekompSpeich
 \-0e;256 KiB;8;4 MiB;1 MiB
 \-1e;1 MiB;8;13 MiB;2 MiB
 \-2e;2 MiB;8;25 MiB;3 MiB
@@ -608,13 +631,22 @@ ungeeignet.
 legt eine Grenze für die Speichernutzung bei der Kompression fest. Wenn
 diese Option mehrmals angegeben wird, ist die zuletzt angegebene wirksam.
 .IP ""
-Falls die Kompressionseinstellungen die \fIGrenze\fP überschreiten, passt \fBxz\fP
-die Einstellungen nach unten an, so dass die Grenze nicht mehr überschritten
-wird und zeigt einen Hinweis an, dass eine automatische Anpassung
-vorgenommen wurde. Solche Anpassungen erfolgen nicht, wenn mit
-\fB\-\-format=raw\fP komprimiert wird oder wenn \fB\-\-no\-adjust\fP angegeben
-wurde. In diesen Fällen wird eine Fehlermeldung mit dem Exit\-Status 1
-ausgegeben und \fBxz\fP mit dem Exit\-Status 1 beendet.
+Falls die Kompressionseinstellungen die \fIGrenze\fP überschreiten, versucht
+\fBxz\fP, die Einstellungen nach unten anzupassen, so dass die Grenze nicht
+mehr überschritten wird und zeigt einen Hinweis an, dass eine automatische
+Anpassung vorgenommen wurde. Die Anpassungen werden in folgender Reihenfolge
+angewendet: Reduzierung der Anzahl der Threads, Wechsel in den
+Einzelthread\-Modus, falls sogar ein einziger Thread im Multithread\-Modus die
+\fIGrenze\fP überschreitet, und schlussendlich die Reduzierung der Größe des
+LZMA2\-Wörterbuchs.
+.IP ""
+Beim Komprimieren mit \fB\-\-format=raw\fP oder falls \fB\-\-no\-adjust\fP angegeben
+wurde, wird nur die Anzahl der Threads reduziert, da nur so die komprimierte
+Ausgabe nicht beeinflusst wird.
+.IP ""
+Falls die \fIGrenze\fP nicht anhand der vorstehend beschriebenen Anpassungen
+gesetzt werden kann, wird ein Fehler angezeigt und \fBxz\fP wird mit dem
+Exit\-Status 1 beendet.
 .IP ""
 Die \fIGrenze\fP kann auf verschiedene Arten angegeben werden:
 .RS
@@ -631,17 +663,15 @@ ist die Grenze auf Systemen mit mehr Speicher höher. Beispiel:
 .IP \(bu 3
 Mit \fB0\fP kann die \fIGrenze\fP auf den Standardwert zurückgesetzt werden. Dies
 ist gegenwärtig gleichbedeutend mit dem Setzen der \fIGrenze\fP auf \fBmax\fP
-(keine Speicherbegrenzung). Sobald die Unterstützung für Multi\-Threading
-implementiert wurde, kann es im Multi\-Thread\-Fall einen Unterschied zwischen
-\fB0\fP und \fBmax\fP geben, daher wird empfohlen, \fB0\fP anstelle von \fBmax\fP zu
-verwenden, bis die Einzelheiten hierzu geklärt sind.
+(keine Speicherbegrenzung).
 .RE
 .IP ""
 Für die 32\-Bit\-Version von \fBxz\fP gibt es einen Spezialfall: Falls die Grenze
-über \fB4020\ MiB\fP liegt, wird die \fIGrenze\fP auf \fB4020\ MiB\fP gesetzt (die
-Werte \fB0\fP und \fBmax\fP werden hiervon nicht beeinflusst; für die
-Dekompression gibt es keine vergleichbare Funktion). Dies kann hilfreich
-sein, wenn ein 32\-Bit\-Executable auf einen 4\ GiB großen Adressraum
+über \fB4020\ MiB\fP liegt, wird die \fIGrenze\fP auf \fB4020\ MiB\fP gesetzt. Auf
+MIPS32 wird stattdessen \fB2000\ MB\fP verwendet (die Werte \fB0\fP und \fBmax\fP
+werden hiervon nicht beeinflusst; für die Dekompression gibt es keine
+vergleichbare Funktion). Dies kann hilfreich sein, wenn ein
+32\-Bit\-Executable auf einen 4\ GiB großen Adressraum (2 GiB auf MIPS32)
 zugreifen kann, wobei wir hoffen wollen, dass es in anderen Situationen
 keine negativen Effekte hat.
 .IP ""
@@ -654,37 +684,99 @@ ohne die \fIGrenze\fP zu überschreiten, gibt \fBxz\fP eine Fehlermeldung aus un
 die Dekompression wird fehlschlagen. Siehe \fB\-\-memlimit\-compress=\fP\fIGrenze\fP
 zu möglichen Wegen, die \fIGrenze\fP anzugeben.
 .TP 
+\fB\-\-memlimit\-mt\-decompress=\fP\fIGrenze\fP
+legt eine Begrenzung des Speicherverbrauchs für Multithread\-Dekompression
+fest. Dies beeinflusst lediglich die Anzahl der Threads; \fBxz\fP wird dadurch
+niemals die Dekompression einer Datei verweigern. Falls die \fIGrenze\fP für
+jegliches Multithreading zu niedrig ist, wird sie ignoriert und \fBxz\fP setzt
+im Einzelthread\-modus fort. Beachten Sie auch, dass bei der Verwendung von
+\fB\-\-memlimit\-decompress\fP dies stets sowohl auf den Einzelthread\-als auch auf
+den Multithread\-Modus angewendet wird und so die effektive \fIGrenze\fP für den
+Multithread\-Modus niemals höher sein wird als die mit
+\fB\-\-memlimit\-decompress\fP gesetzte Grenze.
+.IP ""
+Im Gegensatz zu anderen Optionen zur Begrenzung des Speicherverbrauchs hat
+\fB\-\-memlimit\-mt\-decompress=\fP\fIGrenze\fP eine systemspezifisch vorgegebene
+\fIGrenze\fP. Mit \fBxz \-\-info\-memory\fP können Sie deren aktuellen Wert anzeigen
+lassen.
+.IP ""
+Diese Option und ihr Standardwert existieren, weil die unbegrenzte
+threadbezogene Dekompression bei einigen Eingabedateien zu unglaublich
+großem Speicherverbrauch führen würde. Falls die vorgegebene \fIGrenze\fP auf
+Ihrem System zu niedrig ist, können Sie die \fIGrenze\fP durchaus erhöhen, aber
+setzen Sie sie niemals auf einen Wert größer als die Menge des nutzbaren
+Speichers, da \fBxz\fP bei entsprechenden Eingabedateien versuchen wird, diese
+Menge an Speicher auch bei einer geringen Anzahl von Threads zu
+verwnden. Speichermangel oder Auslagerung verbessern die
+Dekomprimierungsleistung nicht.
+.IP ""
+Siehe \fB\-\-memlimit\-compress=\fP\fIGrenze\fP für mögliche Wege zur Angabe der
+\fIGrenze\fP.  Sezen der \fIGrenze\fP auf \fB0\fP setzt die \fIGrenze\fP auf den
+vorgegebenen systemspezifischen Wert zurück.
+.IP ""
+.TP 
 \fB\-M\fP \fIGrenze\fP, \fB\-\-memlimit=\fP\fIGrenze\fP, \fB\-\-memory=\fP\fIGrenze\fP
-Dies ist gleichbedeutend mit \fB\-\-memlimit\-compress=\fP\fIGrenze
-\fP\fB\-\-memlimit\-decompress=\fP\fIGrenze\fP.
+Dies ist gleichbedeutend mit \fB\-\-memlimit\-compress=\fP\fIGrenze\fP
+\fB\-\-memlimit\-decompress=\fP\fIGrenze\fP \fB\-\-memlimit\-mt\-decompress=\fP\fIGrenze\fP.
 .TP 
 \fB\-\-no\-adjust\fP
-zeigt einen Fehler an und bricht die Ausführung ab, falls die
-Kompressionseinstellungen die Begrenzung der Speichernutzung
-überschreiten. Standardmäßig werden die Einstellungen nach unten korrigiert,
-so dass diese Grenze nicht überschritten wird. Bei der Erzeugung von
-Rohdatenströmen (\fB\-\-format=raw\fP) ist die automatische Korrektur stets
-deaktiviert.
+zeigt einen Fehler an und beendet, falls die Grenze der Speichernutzung
+nicht ohne Änderung der Einstellungen, welche die komprimierte Ausgabe
+beeinflussen, berücksichtigt werden kann. Das bedeutet, dass \fBxz\fP daran
+gehindert wird, den Encoder vom Multithread\-Modus in den Einzelthread\-Modus
+zu versetzen und die Größe des LZMA2\-Wörterbuchs zu reduzieren. Allerdings
+kann bei Verwendung dieser Option dennoch die Anzahl der Threads reduziert
+werden, um die Grenze der Speichernutzung zu halten, sofern dies die
+komprimierte Ausgabe nicht beeinflusst.
+.IP ""
+Die automatische Anpassung ist beim Erzeugen von Rohdatenströmen
+(\fB\-\-format=raw\fP) immer deaktiviert.
 .TP 
 \fB\-T\fP \fIThreads\fP, \fB\-\-threads=\fP\fIThreads\fP
 gibt die Anzahl der zu verwendenden Arbeits\-Threads an. Wenn Sie \fIThreads\fP
-auf einen speziellen Wert \fB0\fP setzen, verwendet \fBxz\fP so viele Threads, wie
-Prozessorkerne im System verfügbar sind. Die tatsächliche Anzahl kann
-geringer sein als die angegebenen \fIThreads\fP, wenn die Eingabedatei nicht
-groß genug für Threading mit den gegebenen Einstellungen ist oder wenn mehr
-Threads die Speicherbegrenzung übersteigen würden.
+auf einen speziellen Wert \fB0\fP setzen, verwendet \fBxz\fP maximal so viele
+Threads, wie der/die Prozessor(en) im System untestützen. Die tatsächliche
+Anzahl kann geringer sein als die angegebenen \fIThreads\fP, wenn die
+Eingabedatei nicht groß genug für Threading mit den gegebenen Einstellungen
+ist oder wenn mehr Threads die Speicherbegrenzung übersteigen würden.
+.IP ""
+Die Multithread\- bzw. Einzelthread\-Kompressoren erzeugen unterschiedliche
+Ausgaben. Der Einzelthread\-Kompressor erzeugt die geringste Dateigröße, aber
+nur die Ausgabe des Multithread\-Kompressors kann mit mehreren Threads wieder
+dekomprimiert werden. Das Setzen der Anzahl der \fIThreads\fP auf \fB1\fP wird den
+Einzelthread\-Modus verwenden.  Das Setzen der Anzahl der \fIThreads\fP auf
+einen anderen Wert einschließlich \fB0\fP verwendet den Multithread\-Kompressor,
+und zwar sogar dann, wenn das System nur einen einzigen Hardware\-Thread
+unterstützt (\fBxz\fP 5.2.x verwendete in diesem Fall noch den
+Einzelthread\-Modus).
+.IP ""
+Um den Multithread\-Modus mit nur einem einzigen Thread zu verwenden, setzen
+Sie die Anzahl der \fIThreads\fP auf \fB+1\fP. Das Präfix \fB+\fP hat mit Werten
+verschieden von \fB1\fP keinen Effekt. Eine Begrenzung des Speicherverbrauchs
+kann \fBxz\fP dennoch veranlassen, den Einzelthread\-Modus zu verwenden, außer
+wenn \fB\-\-no\-adjust\fP verwendet wird. Die Unterstützung für das Präfix \fB+\fP
+wurde in \fBxz\fP 5.4.0 hinzugefügt.
+.IP ""
+Falls das automatische Setzen der Anzahl der Threads angefordert und keine
+Speicherbegrenzung angegeben wurde, dann wird eine systemspezifisch
+vorgegebene weiche Grenze verwendet, um eventuell die Anzahl der Threads zu
+begrenzen. Es ist eine weiche Grenze im Sinne davon, dass sie ignoriert
+wird, falls die Anzahl der Threads 1 ist; daher wird eine weiche Grenze
+\fBxz\fP niemals an der Kompression oder Dekompression hindern. Diese
+vorgegebene weiche Grenze veranlasst \fBxz\fP nicht, vom Multithread\-Modus in
+den Einzelthread\-Modus zu wechseln. Die aktiven Grenzen können Sie mit dem
+Befehl \fBxz \-\-info\-memory\fP anzeigen lassen.
 .IP ""
 Die gegenwärtig einzige Threading\-Methode teilt die Eingabe in Blöcke und
 komprimiert diese unabhängig voneinander. Die vorgegebene Blockgröße ist von
 der Kompressionsstufe abhängig und kann mit der Option
 \fB\-\-block\-size=\fP\fIGröße\fP außer Kraft gesetzt werden.
 .IP ""
-Eine thread\-basierte Dekompression wurde bislang noch nicht
-implementiert. Sie wird nur bei Dateien funktionieren, die mehrere Blöcke
-mit Größeninformationen in deren Headern enthalten. Alle im
-Multi\-Thread\-Modus komprimierten Dateien erfüllen diese Bedingung, im
-Einzel\-Thread\-Modus komprimierte Dateien dagegen nicht, selbst wenn
-\fB\-\-block\-size=\fP\fIGröße\fP verwendet wird.
+Eine thread\-basierte Dekompression wird nur bei Dateien funktionieren, die
+mehrere Blöcke mit Größeninformationen in deren Headern enthalten. Alle im
+Multi\-Thread\-Modus komprimierten Dateien, die groß genug sind, erfüllen
+diese Bedingung, im Einzel\-Thread\-Modus komprimierte Dateien dagegen nicht,
+selbst wenn \fB\-\-block\-size=\fP\fIGröße\fP verwendet wurde.
 .
 .SS "Benutzerdefinierte Filterketten für die Kompression"
 Eine benutzerdefinierte Filterkette ermöglicht die Angabe detaillierter
@@ -723,8 +815,7 @@ getrennten Liste. Zusätzliche Kommata in den \fIOptionen\fP werden
 ignoriert. Jede Option hat einen Standardwert, daher brauchen Sie nur jene
 anzugeben, die Sie ändern wollen.
 .PP
-Um die gesamte Filterkette und die \fIOptionen\fP anzuzeigen, rufen Sie \fBxz
-\-vv\fP auf (was gleichbedeutend mit der zweimaligen Angabe von \fB\-\-verbose\fP
+Um die gesamte Filterkette und die \fIOptionen\fP anzuzeigen, rufen Sie \fBxz \-vv\fP auf (was gleichbedeutend mit der zweimaligen Angabe von \fB\-\-verbose\fP
 ist). Dies funktioniert auch zum Betrachten der von den Voreinstellungen
 verwendeten Filterkettenoptionen.
 .TP 
@@ -939,13 +1030,15 @@ Wörterbuch\-\fIGröße\fP.  LZMA1 benötigt außerdem \fIlc\fP, \fIlp\fP und \f
 \fB\-\-x86\fP[\fB=\fP\fIOptionen\fP]
 .PD 0
 .TP 
-\fB\-\-powerpc\fP[\fB=\fP\fIOptionen\fP]
-.TP 
-\fB\-\-ia64\fP[\fB=\fP\fIOptionen\fP]
-.TP 
 \fB\-\-arm\fP[\fB=\fP\fIOptionen\fP]
 .TP 
 \fB\-\-armthumb\fP[\fB=\fP\fIOptionen\fP]
+.TP 
+\fB\-\-arm64\fP[\fB=\fP\fIOptionen\fP]
+.TP 
+\fB\-\-powerpc\fP[\fB=\fP\fIOptionen\fP]
+.TP 
+\fB\-\-ia64\fP[\fB=\fP\fIOptionen\fP]
 .TP 
 \fB\-\-sparc\fP[\fB=\fP\fIOptionen\fP]
 .PD
@@ -958,21 +1051,8 @@ Redundanz erhöht, was LZMA2 dabei helfen kann, eine um 10 bis 15% kleinere
 \&\fB.xz\fP\-Datei zu erstellen. Die BCJ\-Filter sind immer reversibel, daher
 verursacht die Anwendung eines BCJ\-Filters auf den falschen Datentyp keinen
 Datenverlust, wobei aber das Kompressionsverhältnis etwas schlechter werden
-könnte.
-.IP ""
-Es ist in Ordnung, einen BCJ\-Filter auf eine gesamte Binärdatei anzuwenden;
-es ist nicht nötig, dies nur auf den binären Bereich zu beschränken. Die
-Anwendung eines BCJ\-Filters auf ein Archiv, das sowohl binäre als auch
-nicht\-binäre Dateien enthält, kann gute Ergebnisse liefern, muss es aber
-nicht. Daher ist es generell nicht gut, einen BCJ\-Filter blindlings
-anzuwenden, wenn Sie Binärpakete zwecks Weitergabe komprimieren wollen.
-.IP ""
-Diese BCJ\-Filter sind sehr schnell und erhöhen den Speicherbedarf nur
-unerheblich. Wenn ein BCJ\-Filter das Kompressionsverhältnis einer Datei
-verbessert, kann er auch gleichzeitig die Dekompressionsgeschwindigkeit
-verbessern. Das kommt daher, dass auf der gleichen Hardware die
-Dekompressionsgeschwindigkeit von LZMA2 ungefähr eine feste Anzahl Byte an
-komprimierten Daten pro Sekunde ist.
+könnte. Die BCJ\-Filter sind sehr schnell und verbrauchen nur wenig mehr
+Speicher.
 .IP ""
 Diese BCJ\-Filter haben bekannte Probleme mit dem Kompressionsverhältnis:
 .RS
@@ -983,19 +1063,19 @@ Adressen in den Anweisungen mit Füllwerten gefüllt. Diese BCJ\-Filter führen
 dennoch die Adressumwandlung aus, wodurch die Kompression bei diesen Dateien
 schlechter wird.
 .IP \(bu 3
-Bei der Anwendung eines BCJ\-Filters auf ein Archiv, das mehrere ähnliche
-Binärdateien enthält, kann das Kompressionsverhältnis schlechter sein als
-ohne BCJ\-Filter. Das kommt daher, weil der BCJ\-Filter die Grenzen der
-Binärdateien nicht erkennt und den Zähler der Adressumwandlung für jede
-Binärdatei nicht zurücksetzt.
+Falls ein BCJ\-Filter auf ein Archiv angewendet wird, ist es möglich, dass
+das Kompressionsverhältnis schlechter als ohne Filter wird. Falls es
+beispielsweise ähnliche oder sogar identische ausführbare Dateien gibt, dann
+werden diese durch die Filterung wahrscheinlich »unähnlicher« und
+verschlechtern dadurch das Kompressionsverhältnis. Der Inhalt
+nicht\-ausführbarer Dateien im gleichen Archiv kann sich ebenfalls darauf
+auswirken. In der Praxis werden Sie durch Versuche mit oder ohne BCJ\-Filter
+selbst herausfinden müssen, was situationsbezogen besser ist.
 .RE
 .IP ""
-Beide der oben genannten Probleme werden in der Zukunft in einem neuen
-Filter nicht mehr auftreten. Die alten BCJ\-Filter werden noch in
-eingebetteten Systemen von Nutzen sein, weil der Dekoder des neuen Filters
-größer sein und mehr Speicher beanspruchen wird.
-.IP ""
-Verschiedene Befehlssätze haben unterschiedliche Ausrichtungen:
+Verschiedene Befehlssätze haben unterschiedliche Ausrichtungen: Die
+ausführbare Datei muss in den Eingabedateien einem Vielfachen dieses Wertes
+entsprechen, damit dieser Filter funktioniert.
 .RS
 .RS
 .PP
@@ -1005,11 +1085,12 @@ l n l
 l n l.
 Filter;Ausrichtung;Hinweise
 x86;1;32\-Bit oder 64\-Bit x86
+ARM;4;
+ARM\-Thumb;2;
+ARM64;4;4096\-Byte\-Ausrichtung ist optimal
 PowerPC;4;Nur Big Endian
-ARM;4;Nur Little Endian
-ARM\-Thumb;2;Nur Little Endian
-IA\-64;16;Big oder Little Endian
-SPARC;4;Big oder Little Endian
+IA\-64;16;Itanium
+SPARC;4;
 .TE
 .RE
 .RE
@@ -1018,9 +1099,10 @@ Da die BCJ\-gefilterten Daten üblicherweise mit LZMA2 komprimiert sind, kann
 das Kompressionsverhältnis dadurch etwas verbessert werden, dass die
 LZMA2\-Optionen so gesetzt werden, dass sie der Ausrichtung des gewählten
 BCJ\-Filters entsprechen. Zum Beispiel ist es beim IA\-64\-Filter eine gute
-Wahl, \fBpb=4\fP mit LZMA2 zu setzen (2^4=16). Der x86\-Filter bildet dabei eine
-Ausnahme; Sie sollten bei der für LZMA2 voreingestellten 4\-Byte\-Ausrichtung
-bleiben, wenn Sie x86\-Binärdateien komprimieren.
+Wahl, \fBpb=4\fP oder sogar \fBpb=4,lp=4,lc=0\fP mit LZMA2 zu setzen (2^4=16). Der
+x86\-Filter bildet dabei eine Ausnahme; Sie sollten bei der für LZMA2
+voreingestellten 4\-Byte\-Ausrichtung bleiben, wenn Sie x86\-Binärdateien
+komprimieren.
 .IP ""
 Alle BCJ\-Filter unterstützen die gleichen \fIOptionen\fP:
 .RS
@@ -1129,8 +1211,9 @@ Ausgabe mit dieser aktivierten Option sollte über mehrere
 .TP 
 \fB\-\-info\-memory\fP
 zeigt in einem menschenlesbaren Format an, wieviel physischen Speicher (RAM)
-das System nach Annahme von \fBxz\fP hat, sowie die Speicherbedarfsbegrenzung
-für Kompression und Dekompression, und beendet das Programm erfolgreich.
+und wie viele Prozessor\-Threads das System nach Annahme von \fBxz\fP hat, sowie
+die Speicherbedarfsbegrenzung für Kompression und Dekompression, und beendet
+das Programm erfolgreich.
 .TP 
 \fB\-h\fP, \fB\-\-help\fP
 zeigt eine Hilfemeldung mit den am häufigsten genutzten Optionen an und
@@ -1184,15 +1267,33 @@ Beispiele: 4.999.9beta ist \fB49990091\fP und 5.0.0 is \fB50000002\fP.
 \fBxz \-\-robot \-\-info\-memory\fP gibt eine einzelne Zeile mit drei durch
 Tabulatoren getrennten Spalten aus:
 .IP 1. 4
-Gesamter physischer Speicher (RAM) in Byte
+Gesamter physischer Speicher (RAM) in Byte.
 .IP 2. 4
-Speicherbedarfsbegrenzung für die Kompression in Byte. Ein spezieller Wert
-von Null bezeichnet die Standardeinstellung, die im Einzelthread\-Modus
-bedeutet, dass keine Begrenzung vorhanden ist.
+Speicherbedarfsbegrenzung für die Kompression in Byte
+(\fB\-\-memlimit\-compress\fP). Ein spezieller Wert von \fB0\fP bezeichnet die
+Standardeinstellung, die im Einzelthread\-Modus bedeutet, dass keine
+Begrenzung vorhanden ist.
 .IP 3. 4
-Speicherbedarfsbegrenzung für die Dekompression in Byte. Ein spezieller Wert
-von Null bezeichnet die Standardeinstellung, die im Einzelthread\-Modus
-bedeutet, dass keine Begrenzung vorhanden ist.
+Speicherbedarfsbegrenzung für die Dekompression in Byte
+(\fB\-\-memlimit\-decompress\fP). Ein spezieller Wert von \fB0\fP bezeichnet die
+Standardeinstellung, die im Einzelthread\-Modus bedeutet, dass keine
+Begrenzung vorhanden ist.
+.IP 4. 4
+Seit \fBxz\fP 5.3.4alpha: Die Speichernutzung für Multithread\-Dekompression in
+Byte (\fB\-\-memlimit\-mt\-decompress\fP). Dies ist niemals \fB0\fP, da ein
+systemspezifischer Vorgabewert (gezeigt in Spalte 5) verwendet wird, falls
+keine Grenze ausdrücklich angegeben wurde. Dies ist außerdem niemals größer
+als der Wert in in Spalte 3, selbst wenn mit \fB\-\-memlimit\-mt\-decompress\fP ein
+größerer Wert angegeben wurde.
+.IP 5. 4
+Seit \fBxz\fP 5.3.4alpha: Eine systemspezifisch vorgegebene Begrenzung des
+Speicherverbrauchs, die zur Begrenzung der Anzahl der Threads beim
+Komprimieren mit automatischer Anzahl der Threads (\fB\-\-threads=0\fP) und wenn
+keine Speicherbedarfsbegrenzung angegeben wurde (\fB\-\-memlimit\-compress\fP)
+verwendet wird. Dies wird auch als Standardwert für
+\fB\-\-memlimit\-mt\-decompress\fP verwendet.
+.IP 6. 4
+Seit \fBxz\fP 5.3.4alpha: Anzahl der verfügbaren Prozessorthreads.
 .PP
 In der Zukunft könnte die Ausgabe von \fBxz \-\-robot \-\-info\-memory\fP weitere
 Spalten enthalten, aber niemals mehr als eine einzelne Zeile.
@@ -1429,9 +1530,9 @@ werden.
 .TP 
 \fBXZ_OPT\fP
 Dies dient der Übergabe von Optionen an \fBxz\fP, wenn es nicht möglich ist,
-die Optionen direkt in der Befehlszeile von \fBxz\fP zu übergeben. Dies ist
-beispielsweise der Fall, wenn \fBxz\fP von einem Skript oder Dienstprogramm
-ausgeführt wird, zum Beispiel GNU \fBtar\fP(1):
+die Optionen direkt in der Befehlszeile von \fBxz\fP zu übergeben. Dies ist der
+Fall, wenn \fBxz\fP von einem Skript oder Dienstprogramm ausgeführt wird, zum
+Beispiel GNU \fBtar\fP(1):
 .RS
 .RS
 .PP
@@ -1449,8 +1550,7 @@ angemessen ist. Zum Beispiel könnte in \fBsh\fP(1)\-Skripten Folgendes stehen:
 .RS
 .PP
 .nf
-\f(CWXZ_OPT=${XZ_OPT\-"\-7e"}
-export XZ_OPT\fP
+\f(CWXZ_OPT=${XZ_OPT\-"\-7e"} export XZ_OPT\fP
 .fi
 .RE
 .RE
@@ -1623,8 +1723,8 @@ wenn die Dekompression erfolgreich war:
 .RE
 .PP
 \fIbaz.tar.xz\fP mit der Voreinstellung \fB\-4e\fP (\fB\-4 \-\-extreme\fP) erzeugen, was
-langsamer ist als beispielsweise die Vorgabe \fB\-6\fP, aber weniger Speicher
-für Kompression und Dekompression benötigt (48\ MiB beziehungsweise 5\ MiB):
+langsamer ist als die Vorgabe \fB\-6\fP, aber weniger Speicher für Kompression
+und Dekompression benötigt (48\ MiB beziehungsweise 5\ MiB):
 .RS
 .PP
 .nf
@@ -1647,8 +1747,7 @@ Parallelisieren der Kompression vieler Dateien verwendet werden:
 .RS
 .PP
 .nf
-\f(CWfind . \-type f \e! \-name '*.xz' \-print0 \e
-    | xargs \-0r \-P4 \-n16 xz \-T1\fP
+\f(CWfind . \-type f \e! \-name '*.xz' \-print0 \e     | xargs \-0r \-P4 \-n16 xz \-T1\fP
 .fi
 .RE
 .PP
@@ -1680,11 +1779,7 @@ Beta\-Versionen kompatibel, welche die Option \fB\-\-robot\fP nicht unterstütze
 .RS
 .PP
 .nf
-\f(CWif ! eval "$(xz \-\-robot \-\-version 2> /dev/null)" ||
-        [ "$XZ_VERSION" \-lt 50000002 ]; then
-    echo "Ihre Version von Xz ist zu alt."
-fi
-unset XZ_VERSION LIBLZMA_VERSION\fP
+\f(CWif ! eval "$(xz \-\-robot \-\-version 2> /dev/null)" ||         [ "$XZ_VERSION" \-lt 50000002 ]; then     echo "Ihre Version von Xz ist zu alt." fi unset XZ_VERSION LIBLZMA_VERSION\fP
 .fi
 .RE
 .PP
@@ -1693,12 +1788,7 @@ aber eine bereits gesetzte Begrenzung nicht erhöhen:
 .RS
 .PP
 .nf
-\f(CWNEWLIM=$((123 << 20))  # 123 MiB
-OLDLIM=$(xz \-\-robot \-\-info\-memory | cut \-f3)
-if [ $OLDLIM \-eq 0 \-o $OLDLIM \-gt $NEWLIM ]; then
-    XZ_OPT="$XZ_OPT \-\-memlimit\-decompress=$NEWLIM"
-    export XZ_OPT
-fi\fP
+\f(CWNEWLIM=$((123 << 20))\ \ # 123 MiB OLDLIM=$(xz \-\-robot \-\-info\-memory | cut \-f3) if [ $OLDLIM \-eq 0 \-o $OLDLIM \-gt $NEWLIM ]; then     XZ_OPT="$XZ_OPT \-\-memlimit\-decompress=$NEWLIM"     export XZ_OPT fi\fP
 .fi
 .RE
 .
@@ -1717,7 +1807,7 @@ nützlich. Diese sind die relevanten Teile aus diesen zwei Tabellen:
 tab(;);
 c c
 n n.
-Voreinstellung;KompCPU
+Voreinst.;KomprCPU
 \-0;0
 \-1;1
 \-2;2
