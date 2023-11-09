@@ -13,7 +13,7 @@ Standards-Version: 4.3.0
 Vcs-Browser: https://repo.or.cz/w/xz/debian
 Vcs-Git: https://repo.or.cz/r/xz/debian
 Homepage: https://tukaani.org/xz/
-XS-Pexip-Upstream: http://deb.debian.org/debian/ bullseye
+XS-Pexip-Upstream: http://deb.debian.org/debian/ bookworm
 
 Package: liblzma5
 Section: libs
