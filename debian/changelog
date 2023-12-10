@@ -1,3 +1,9 @@
+xz-utils (5.4.1-0.2pexip3) pexip-bookworm; urgency=medium
+
+  * Fix up control file.
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Sun, 10 Dec 2023 16:04:28 +0000
+
 xz-utils (5.4.1-0.2pexip2) pexip-bookworm; urgency=medium
 
   * Bookworm build for product distribution
