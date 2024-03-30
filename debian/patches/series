@@ -12,3 +12,4 @@
 0012-Build-Don-t-put-GNU-Linux-specific-symbol-versions-i.patch
 0013-liblzma-Fix-building-with-Intel-ICC-the-classic-comp.patch
 0014-liblzma-Use-__has_attribute-__symver__-to-fix-Clang-.patch
+0015-liblzma-Add-lzma_file_info_decoder.patch

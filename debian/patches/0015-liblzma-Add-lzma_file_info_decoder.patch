@@ -1,0 +1,161 @@
+From e353d0b1cc0d3997ae5048faa8e6786414953e06 Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Mon, 24 Apr 2017 19:35:50 +0300
+Subject: [PATCH] liblzma: Add lzma_file_info_decoder().
+
+[jmb: adjust .map changes following 31d80c6b]
+[jmb: remove implementation]
+---
+ src/liblzma/api/lzma/index.h    |  66 +++
+ src/liblzma/common/Makefile.inc |   1 +
+ src/liblzma/common/file_info.c  |  24 ++
+ src/liblzma/liblzma_generic.map |   5 +
+ src/liblzma/liblzma_linux.map   |   5 +
+ 5 files changed, 101 insertions(+)
+ create mode 100644 src/liblzma/common/file_info.c
+
+diff --git a/src/liblzma/api/lzma/index.h b/src/liblzma/api/lzma/index.h
+index 3dac6fb8..144d4166 100644
+--- a/src/liblzma/api/lzma/index.h
++++ b/src/liblzma/api/lzma/index.h
+@@ -684,3 +684,69 @@ extern LZMA_API(lzma_ret) lzma_index_buffer_decode(lzma_index **i,
+ 		uint64_t *memlimit, const lzma_allocator *allocator,
+ 		const uint8_t *in, size_t *in_pos, size_t in_size)
+ 		lzma_nothrow;
++
++
++/**
++ * \brief       Initialize a .xz file information decoder
++ *
++ * \param       strm        Pointer to a properly prepared lzma_stream
++ * \param       dest_index  Pointer to a pointer where the decoder will put
++ *                          the decoded lzma_index. The old value
++ *                          of *dest_index is ignored (not freed).
++ * \param       memlimit    How much memory the resulting lzma_index is
++ *                          allowed to require. Use UINT64_MAX to
++ *                          effectively disable the limiter.
++ * \param       file_size   Size of the input .xz file
++ *
++ * This decoder decodes the Stream Header, Stream Footer, Index, and
++ * Stream Padding field(s) from the input .xz file and stores the resulting
++ * combined index in *dest_index. This information can be used to get the
++ * uncompressed file size with lzma_index_uncompressed_size(*dest_index) or,
++ * for example, to implement random access reading by locating the Blocks
++ * in the Streams.
++ *
++ * To get the required information from the .xz file, lzma_code() may ask
++ * the application to seek in the input file by returning LZMA_SEEK_NEEDED
++ * and having the target file position specified in lzma_stream.seek_pos.
++ * The number of seeks required depends on the input file and how big buffers
++ * the application provides. When possible, the decoder will seek backward
++ * and forward in the given buffer to avoid useless seek requests. Thus, if
++ * the application provides the whole file at once, no external seeking will
++ * be required (that is, lzma_code() won't return LZMA_SEEK_NEEDED).
++ *
++ * The value in lzma_stream.total_in can be used to estimate how much data
++ * liblzma had to read to get the file information. However, due to seeking
++ * and the way total_in is updated, the value of total_in will be somewhat
++ * inaccurate (a little too big). Thus, total_in is a good estimate but don't
++ * expect to see the same exact value for the same file if you change the
++ * input buffer size or switch to a different liblzma version.
++ *
++ * Valid `action' arguments to lzma_code() are LZMA_RUN and LZMA_FINISH.
++ * You only need to use LZMA_RUN; LZMA_FINISH is only supported because it
++ * might be convenient for some applications. If you use LZMA_FINISH and if
++ * lzma_code() asks the application to seek, remember to reset `action' back
++ * to LZMA_RUN unless you hit the end of the file again.
++ *
++ * Possible return values from lzma_code():
++ *   - LZMA_OK: All OK so far, more input needed
++ *   - LZMA_SEEK_NEEDED: Provide more input starting from the absolute
++ *     file position strm->seek_pos
++ *   - LZMA_STREAM_END: Decoding was successful, *dest_index has been set
++ *   - LZMA_FORMAT_ERROR: The input file is not in the .xz format (the
++ *     expected magic bytes were not found from the beginning of the file)
++ *   - LZMA_OPTIONS_ERROR: File looks valid but contains headers that aren't
++ *     supported by this version of liblzma
++ *   - LZMA_DATA_ERROR: File is corrupt
++ *   - LZMA_BUF_ERROR
++ *   - LZMA_MEM_ERROR
++ *   - LZMA_MEMLIMIT_ERROR
++ *   - LZMA_PROG_ERROR
++ *
++ * \return      - LZMA_OK
++ *              - LZMA_MEM_ERROR
++ *              - LZMA_PROG_ERROR
++ */
++extern LZMA_API(lzma_ret) lzma_file_info_decoder(
++		lzma_stream *strm, lzma_index **dest_index,
++		uint64_t memlimit, uint64_t file_size)
++		lzma_nothrow;
+diff --git a/src/liblzma/common/Makefile.inc b/src/liblzma/common/Makefile.inc
+index 67c8e48c..0408f9a4 100644
+--- a/src/liblzma/common/Makefile.inc
++++ b/src/liblzma/common/Makefile.inc
+@@ -65,6 +65,7 @@ liblzma_la_SOURCES += \
+ 	common/block_decoder.h \
+ 	common/block_header_decoder.c \
+ 	common/easy_decoder_memusage.c \
++	common/file_info.c \
+ 	common/filter_buffer_decoder.c \
+ 	common/filter_decoder.c \
+ 	common/filter_decoder.h \
+diff --git a/src/liblzma/common/file_info.c b/src/liblzma/common/file_info.c
+new file mode 100644
+index 00000000..deb644f9
+--- /dev/null
++++ b/src/liblzma/common/file_info.c
+@@ -0,0 +1,24 @@
++///////////////////////////////////////////////////////////////////////////////
++//
++/// \file       file_info.c
++/// \brief      Decode .xz file information into a lzma_index structure
++//
++//  Author:     Lasse Collin
++//
++//  This file has been put into the public domain.
++//  You can do whatever you want with this file.
++//
++///////////////////////////////////////////////////////////////////////////////
++
++#include "index_decoder.h"
++
++
++extern LZMA_API(lzma_ret)
++lzma_file_info_decoder(lzma_stream *strm lzma_attribute((__unused__)),
++		lzma_index **dest_index lzma_attribute((__unused__)),
++		uint64_t memlimit lzma_attribute((__unused__)),
++		uint64_t file_size lzma_attribute((__unused__)))
++{
++	// file info decoder not supported in this version
++	return LZMA_PROG_ERROR;
++}
+diff --git a/src/liblzma/liblzma_generic.map b/src/liblzma/liblzma_generic.map
+index f53a4ea3..930e5e86 100644
+--- a/src/liblzma/liblzma_generic.map
++++ b/src/liblzma/liblzma_generic.map
+@@ -103,3 +103,8 @@ global:
+ 	lzma_stream_encoder_mt;
+ 	lzma_stream_encoder_mt_memusage;
+ } XZ_5.0;
++
++XZ_5.4 {
++global:
++	lzma_file_info_decoder;
++} XZ_5.2;
+diff --git a/src/liblzma/liblzma_linux.map b/src/liblzma/liblzma_linux.map
+index f53a4ea3..930e5e86 100644
+--- a/src/liblzma/liblzma_linux.map
++++ b/src/liblzma/liblzma_linux.map
+@@ -121,3 +121,8 @@ global:
+ 	lzma_stream_encoder_mt;
+ 	lzma_stream_encoder_mt_memusage;
+ } XZ_5.1.2alpha;
++
++XZ_5.4 {
++global:
++	lzma_file_info_decoder;
++} XZ_5.2;
+-- 
+2.39.2
+
