@@ -1,0 +1,28 @@
+From 454f567e58bbadea5cff4f31ef450c1305e9853d Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Fri, 11 Nov 2022 17:15:25 +0200
+Subject: [PATCH] liblzma: Fix building with Intel ICC (the classic compiler).
+
+It claims __GNUC__ >= 10 but doesn't support __symver__ attribute.
+
+Thanks to Stephen Sachs.
+---
+ src/liblzma/common/common.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/liblzma/common/common.h b/src/liblzma/common/common.h
+index 6b659c66..33928c3d 100644
+--- a/src/liblzma/common/common.h
++++ b/src/liblzma/common/common.h
+@@ -51,7 +51,7 @@
+ // since 2000). When using @@ instead of @@@, the internal name must not be
+ // the same as the external name to avoid problems in some situations. This
+ // is why "#define foo_52 foo" is needed for the default symbol versions.
+-#	if TUKLIB_GNUC_REQ(10, 0)
++#	if TUKLIB_GNUC_REQ(10, 0) && !defined(__INTEL_COMPILER)
+ #		define LZMA_SYMVER_API(extnamever, type, intname) \
+ 			extern __attribute__((__symver__(extnamever))) \
+ 					LZMA_API(type) intname
+-- 
+2.39.2
+

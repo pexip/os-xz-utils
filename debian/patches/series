@@ -8,3 +8,7 @@
 0008-xz-Make-keep-accept-symlinks-hardlinks-and-setuid-se.patch
 0009-Scripts-Fix-exit-status-of-xzgrep.patch
 0010-xzgrep-Fix-escaping-of-malicious-filenames-ZDI-CAN-1.patch
+0011-liblzma-Vaccinate-against-an-ill-patch-from-RHEL-Cen.patch
+0012-Build-Don-t-put-GNU-Linux-specific-symbol-versions-i.patch
+0013-liblzma-Fix-building-with-Intel-ICC-the-classic-comp.patch
+0014-liblzma-Use-__has_attribute-__symver__-to-fix-Clang-.patch

@@ -1,0 +1,216 @@
+From b61da00c7f535bd48930a878efdf6843d804983e Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Thu, 24 Nov 2022 14:52:44 +0200
+Subject: [PATCH] Build: Don't put GNU/Linux-specific symbol versions into
+ static liblzma.
+
+It not only makes no sense to put symbol versions into a static library
+but it can also cause breakage.
+
+By default Libtool #defines PIC if building a shared library and
+doesn't define it for static libraries. This is documented in the
+Libtool manual. It can be overriden using --with-pic or --without-pic.
+configure.ac detects if --with-pic or --without-pic is used and then
+gives an error if neither --disable-shared nor --disable-static was
+used at the same time. Thus, in normal situations it works to build
+both shared and static library at the same time on GNU/Linux,
+only --with-pic or --without-pic requires that only one type of
+library is built.
+
+Thanks to John Paul Adrian Glaubitz from Debian for reporting
+the problem that occurred on ia64:
+https://www.mail-archive.com/xz-devel@tukaani.org/msg00610.html
+
+[jmb: remove CMakeLists patch, as no such file in 5.2.5]
+---
+ configure.ac                | 143 ++++++++++++++++++++++++------------
+ src/liblzma/common/common.h |  12 +++
+ 3 files changed, 111 insertions(+), 49 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index af82adeb..f76b283c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -469,54 +469,6 @@ AC_ARG_ENABLE([doc], [AS_HELP_STRING([--disable-doc],
+ AM_CONDITIONAL([COND_DOC], [test x$enable_doc != xno])
+ 
+ 
+-#####################
+-# Symbol versioning #
+-#####################
+-
+-AC_MSG_CHECKING([if library symbol versioning should be used])
+-AC_ARG_ENABLE([symbol-versions], [AS_HELP_STRING([--enable-symbol-versions],
+-		[Use symbol versioning for liblzma. Enabled by default on
+-		GNU/Linux, other GNU-based systems, and FreeBSD.])],
+-	[], [enable_symbol_versions=auto])
+-if test "x$enable_symbol_versions" = xauto; then
+-	case $host_os in
+-		# NOTE: Even if one omits -gnu on GNU/Linux (e.g.
+-		# i486-slackware-linux), configure will (via config.sub)
+-		# append -gnu (e.g. i486-slackware-linux-gnu), and this
+-		# test will work correctly.
+-		gnu* | *-gnu* | freebsd*)
+-			enable_symbol_versions=yes
+-			;;
+-		*)
+-			enable_symbol_versions=no
+-			;;
+-	esac
+-fi
+-AC_MSG_RESULT([$enable_symbol_versions])
+-
+-# There are two variants for symbol versioning.
+-# See src/liblzma/validate_map.sh for details.
+-if test "x$enable_symbol_versions" = xyes; then
+-	case $host_os in
+-		linux*)
+-			enable_symbol_versions=linux
+-			AC_DEFINE([HAVE_SYMBOL_VERSIONS_LINUX], [1],
+-				[Define to 1 to if GNU/Linux-specific details
+-				are wanted for symbol versioning. This must
+-				be used together with liblzma_linux.map.])
+-			;;
+-		*)
+-			enable_symbol_versions=generic
+-			;;
+-	esac
+-fi
+-
+-AM_CONDITIONAL([COND_SYMVERS_LINUX],
+-	[test "x$enable_symbol_versions" = xlinux])
+-AM_CONDITIONAL([COND_SYMVERS_GENERIC],
+-	[test "x$enable_symbol_versions" = xgeneric])
+-
+-
+ ##############
+ # Sandboxing #
+ ##############
+@@ -663,6 +615,101 @@ LT_LANG([Windows Resource])
+ # libs as shared.
+ AM_CONDITIONAL([COND_SHARED], [test "x$enable_shared" != xno])
+ 
++#####################
++# Symbol versioning #
++#####################
++
++# NOTE: This checks if we are building shared or static library
++# and if --with-pic or --without-pic was used. Thus this check
++# must be after Libtool initialization.
++AC_MSG_CHECKING([if library symbol versioning should be used])
++AC_ARG_ENABLE([symbol-versions], [AS_HELP_STRING([--enable-symbol-versions],
++		[Use symbol versioning for liblzma. Enabled by default on
++		GNU/Linux, other GNU-based systems, and FreeBSD.])],
++	[], [enable_symbol_versions=auto])
++if test "x$enable_symbol_versions" = xauto; then
++	case $host_os in
++		# NOTE: Even if one omits -gnu on GNU/Linux (e.g.
++		# i486-slackware-linux), configure will (via config.sub)
++		# append -gnu (e.g. i486-slackware-linux-gnu), and this
++		# test will work correctly.
++		gnu* | *-gnu* | freebsd*)
++			enable_symbol_versions=yes
++			;;
++		*)
++			enable_symbol_versions=no
++			;;
++	esac
++fi
++
++# There are two variants for symbol versioning.
++# See src/liblzma/validate_map.sh for details.
++#
++# On GNU/Linux, extra symbols are added in the C code. These extra symbols
++# must not be put into a static library as they can cause problems (and
++# even if they didn't cause problems, they would be useless). On other
++# systems symbol versioning may be used too but there is no problem as only
++# a linker script is specified in src/liblzma/Makefile.am and that isn't
++# used when creating a static library.
++#
++# Libtool always uses -DPIC when building shared libraries by default and
++# doesn't use it for static libs by default. This can be overriden with
++# --with-pic and --without-pic though. As long as neither --with-pic nor
++# --without-pic is used then we can use #ifdef PIC to detect if the file is
++# being built for a shared library.
++if test "x$enable_symbol_versions" = xno ; then
++	enable_symbol_versions=no
++	AC_MSG_RESULT([no])
++elif test "x$enable_shared" = xno ; then
++	enable_symbol_versions=no
++	AC_MSG_RESULT([no (not building a shared library)])
++else
++	case $host_os in
++		linux*)
++			case "$pic_mode-$enable_static" in
++				default-*)
++					# Use symvers if PIC is defined.
++					have_symbol_versions_linux=2
++					;;
++				*-no)
++					# Not building static library.
++					# Use symvers unconditionally.
++					have_symbol_versions_linux=1
++					;;
++				*)
++					AC_MSG_RESULT([])
++					AC_MSG_ERROR([
++    On GNU/Linux, building both shared and static library at the same time
++    is not supported if --with-pic or --without-pic is used.
++    Use either --disable-shared or --disable-static to build one type
++    of library at a time. If both types are needed, build one at a time,
++    possibly picking only src/liblzma/.libs/liblzma.a from the static build.])
++					;;
++			esac
++			enable_symbol_versions=linux
++			AC_DEFINE_UNQUOTED([HAVE_SYMBOL_VERSIONS_LINUX],
++				[$have_symbol_versions_linux],
++				[Define to 1 to if GNU/Linux-specific details
++				are unconditionally wanted for symbol
++				versioning. Define to 2 to if these are wanted
++				only if also PIC is defined (allows building
++				both shared and static liblzma at the same
++				time with Libtool if neither --with-pic nor
++				--without-pic is used). This define must be
++				used together with liblzma_linux.map.])
++			;;
++		*)
++			enable_symbol_versions=generic
++			;;
++	esac
++	AC_MSG_RESULT([yes ($enable_symbol_versions)])
++fi
++
++AM_CONDITIONAL([COND_SYMVERS_LINUX],
++	[test "x$enable_symbol_versions" = xlinux])
++AM_CONDITIONAL([COND_SYMVERS_GENERIC],
++	[test "x$enable_symbol_versions" = xgeneric])
++
+ 
+ ###############################################################################
+ # Checks for libraries.
+diff --git a/src/liblzma/common/common.h b/src/liblzma/common/common.h
+index 33928c3d..7fb1732a 100644
+--- a/src/liblzma/common/common.h
++++ b/src/liblzma/common/common.h
+@@ -34,6 +34,18 @@
+ 
+ #include "lzma.h"
+ 
++// The extra symbol versioning in the C files may only be used when
++// building a shared library. If HAVE_SYMBOL_VERSIONS_LINUX is defined
++// to 2 then symbol versioning is done only if also PIC is defined.
++// By default Libtool defines PIC when building a shared library and
++// doesn't define it when building a static library but it can be
++// overriden with --with-pic and --without-pic. configure let's rely
++// on PIC if neither --with-pic or --without-pic was used.
++#if defined(HAVE_SYMBOL_VERSIONS_LINUX) \
++		&& (HAVE_SYMBOL_VERSIONS_LINUX == 2 && !defined(PIC))
++#	undef HAVE_SYMBOL_VERSIONS_LINUX
++#endif
++
+ #ifdef HAVE_SYMBOL_VERSIONS_LINUX
+ // To keep link-time optimization (LTO, -flto) working with GCC,
+ // the __symver__ attribute must be used instead of __asm__(".symver ...").
+-- 
+2.39.2
+
