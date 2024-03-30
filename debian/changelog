@@ -1,3 +1,29 @@
+xz-utils (5.2.5repack-2.1~deb11u1pexip5) pexip; urgency=medium
+
+  * Backport ABI compatibility patches from 5.2.{7,8,9,10}:
+    0011-liblzma-Vaccinate-against-an-ill-patch-from-RHEL-Cen.patch
+    0012-Build-Don-t-put-GNU-Linux-specific-symbol-versions-i.patch
+    0013-liblzma-Fix-building-with-Intel-ICC-the-classic-comp.patch
+    0014-liblzma-Use-__has_attribute-__symver__-to-fix-Clang-.patch
+  * Backport lzma_file_info_decoder() support from 5.4.0:
+    0015-liblzma-Make-lzma_index_decoder_init-visible-to-othe.patch
+    0015-liblzma-Add-lzma_file_info_decoder.patch
+  * Stub implementation of MicroLZMA API from 5.4.0:
+    0016-liblzma-Add-MicroLZMA-stub.patch
+    0017-Build-Add-configure-option-disable-microlzma.patch
+    0019-liblzma-Add-the-missing-Makefile.inc-change-for-disa.patch
+  * Minimal (single-threaded) implementation of lzma_stream_decoder_mt():
+    0018-liblzma-Add-threaded-.xz-decompressor.patch
+  * Stub implementation of lzip decompression API from 5.4.0:
+    0020-liblzma-Add-.lz-lzip-decompression-support-format-ve.patch
+  * Backport lzma_filters_free() support from 5.4.0:
+    0021-liblzma-Add-new-API-function-lzma_filters_free.patch
+  * Backport lzma_str_{from,to}_filters support from 5.4.0:
+    0022-liblzma-Make-lzma_validate_chain-available-outside-f.patch
+    0023-liblzma-Add-lzma_str_to_filters-_from_filters-and-_l.patch
+
+ -- John-Mark Bell <jmb@pexip.com>  Sat, 30 Mar 2024 22:06:06 +0000
+
 xz-utils (5.2.5repack-2.1~deb11u1pexip4) pexip-bullseye; urgency=medium
 
   * Bullseye rebuild for ARM64 inclusion
