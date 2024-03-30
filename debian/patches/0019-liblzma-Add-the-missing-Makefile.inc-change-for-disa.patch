@@ -1,0 +1,56 @@
+From 633d48a075b9ce4b9c08a7a56a7eb4cabc18100c Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Wed, 9 Nov 2022 14:17:23 +0200
+Subject: [PATCH] liblzma: Add the missing Makefile.inc change for
+ --disable-microlzma.
+
+This was forgotten from commit 59c4d6e1390f6f4176f43ac1dad1f7ac03c449b8.
+---
+ src/liblzma/common/Makefile.inc | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/src/liblzma/common/Makefile.inc b/src/liblzma/common/Makefile.inc
+index 78bc95bb..5efa13a0 100644
+--- a/src/liblzma/common/Makefile.inc
++++ b/src/liblzma/common/Makefile.inc
+@@ -36,7 +36,6 @@ liblzma_la_SOURCES += \
+ 	common/easy_buffer_encoder.c \
+ 	common/easy_encoder.c \
+ 	common/easy_encoder_memusage.c \
+-	common/microlzma_encoder.c \
+ 	common/filter_buffer_encoder.c \
+ 	common/filter_encoder.c \
+ 	common/filter_encoder.h \
+@@ -53,6 +52,11 @@ if COND_THREADS
+ 	common/outqueue.h \
+ 	common/stream_encoder_mt.c
+ endif
++
++if COND_MICROLZMA
++liblzma_la_SOURCES += \
++	common/microlzma_encoder.c
++endif
+ endif
+ 
+ if COND_MAIN_DECODER
+@@ -65,7 +69,6 @@ liblzma_la_SOURCES += \
+ 	common/block_decoder.h \
+ 	common/block_header_decoder.c \
+ 	common/easy_decoder_memusage.c \
+-	common/microlzma_decoder.c \
+ 	common/file_info.c \
+ 	common/filter_buffer_decoder.c \
+ 	common/filter_decoder.c \
+@@ -82,4 +85,9 @@ if COND_THREADS
+ liblzma_la_SOURCES += \
+ 	common/stream_decoder_mt.c
+ endif
++
++if COND_MICROLZMA
++liblzma_la_SOURCES += \
++	common/microlzma_decoder.c
++endif
+ endif
+-- 
+2.39.2
+
