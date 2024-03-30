@@ -18,3 +18,4 @@
 0017-Build-Add-configure-option-disable-microlzma.patch
 0018-liblzma-Add-threaded-.xz-decompressor.patch
 0019-liblzma-Add-the-missing-Makefile.inc-change-for-disa.patch
+0020-liblzma-Add-.lz-lzip-decompression-support-format-ve.patch
