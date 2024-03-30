@@ -20,3 +20,4 @@
 0019-liblzma-Add-the-missing-Makefile.inc-change-for-disa.patch
 0020-liblzma-Add-.lz-lzip-decompression-support-format-ve.patch
 0021-liblzma-Add-new-API-function-lzma_filters_free.patch
+0022-liblzma-Make-lzma_validate_chain-available-outside-f.patch
