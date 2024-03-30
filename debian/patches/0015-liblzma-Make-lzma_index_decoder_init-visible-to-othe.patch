@@ -1,0 +1,97 @@
+From 310d19816d1652b0c8bb1b82574d46345d924752 Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Thu, 30 Mar 2017 20:03:05 +0300
+Subject: [PATCH] liblzma: Make lzma_index_decoder_init() visible to other
+ liblzma funcs.
+
+This is to allow other functions to use it without going
+via the public API (lzma_index_decoder()).
+---
+ src/liblzma/common/Makefile.inc    |  1 +
+ src/liblzma/common/index_decoder.c | 10 +++++-----
+ src/liblzma/common/index_decoder.h | 24 ++++++++++++++++++++++++
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+ create mode 100644 src/liblzma/common/index_decoder.h
+
+diff --git a/src/liblzma/common/Makefile.inc b/src/liblzma/common/Makefile.inc
+index 6ca6addd..67c8e48c 100644
+--- a/src/liblzma/common/Makefile.inc
++++ b/src/liblzma/common/Makefile.inc
+@@ -70,6 +70,7 @@ liblzma_la_SOURCES += \
+ 	common/filter_decoder.h \
+ 	common/filter_flags_decoder.c \
+ 	common/index_decoder.c \
++	common/index_decoder.h \
+ 	common/index_hash.c \
+ 	common/stream_buffer_decoder.c \
+ 	common/stream_decoder.c \
+diff --git a/src/liblzma/common/index_decoder.c b/src/liblzma/common/index_decoder.c
+index cc07a1b8..e71fc6df 100644
+--- a/src/liblzma/common/index_decoder.c
++++ b/src/liblzma/common/index_decoder.c
+@@ -10,7 +10,7 @@
+ //
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+-#include "index.h"
++#include "index_decoder.h"
+ #include "check.h"
+ 
+ 
+@@ -265,11 +265,11 @@ index_decoder_reset(lzma_index_coder *coder, const lzma_allocator *allocator,
+ }
+ 
+ 
+-static lzma_ret
+-index_decoder_init(lzma_next_coder *next, const lzma_allocator *allocator,
++extern lzma_ret
++lzma_index_decoder_init(lzma_next_coder *next, const lzma_allocator *allocator,
+ 		lzma_index **i, uint64_t memlimit)
+ {
+-	lzma_next_coder_init(&index_decoder_init, next, allocator);
++	lzma_next_coder_init(&lzma_index_decoder_init, next, allocator);
+ 
+ 	if (i == NULL)
+ 		return LZMA_PROG_ERROR;
+@@ -296,7 +296,7 @@ index_decoder_init(lzma_next_coder *next, const lzma_allocator *allocator,
+ extern LZMA_API(lzma_ret)
+ lzma_index_decoder(lzma_stream *strm, lzma_index **i, uint64_t memlimit)
+ {
+-	lzma_next_strm_init(index_decoder_init, strm, i, memlimit);
++	lzma_next_strm_init(lzma_index_decoder_init, strm, i, memlimit);
+ 
+ 	strm->internal->supported_actions[LZMA_RUN] = true;
+ 	strm->internal->supported_actions[LZMA_FINISH] = true;
+diff --git a/src/liblzma/common/index_decoder.h b/src/liblzma/common/index_decoder.h
+new file mode 100644
+index 00000000..1af433b5
+--- /dev/null
++++ b/src/liblzma/common/index_decoder.h
+@@ -0,0 +1,24 @@
++///////////////////////////////////////////////////////////////////////////////
++//
++/// \file       index_decoder.h
++/// \brief      Decodes the Index field
++//
++//  Author:     Lasse Collin
++//
++//  This file has been put into the public domain.
++//  You can do whatever you want with this file.
++//
++///////////////////////////////////////////////////////////////////////////////
++
++#ifndef LZMA_INDEX_DECODER_H
++#define LZMA_INDEX_DECODER_H
++
++#include "index.h"
++
++
++extern lzma_ret lzma_index_decoder_init(lzma_next_coder *next,
++		const lzma_allocator *allocator,
++		lzma_index **i, uint64_t memlimit);
++
++
++#endif
+-- 
+2.39.2
+
