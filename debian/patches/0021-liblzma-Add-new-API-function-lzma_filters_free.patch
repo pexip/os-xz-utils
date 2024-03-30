@@ -1,0 +1,106 @@
+From d0901645170b638c517f5c50866b6ef48f491c65 Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Thu, 24 Nov 2022 01:02:50 +0200
+Subject: [PATCH] liblzma: Add new API function lzma_filters_free().
+
+This is small but convenient and should have been added
+a long time ago.
+---
+ src/liblzma/api/lzma/filter.h      | 21 +++++++++++++++++++++
+ src/liblzma/common/filter_common.c | 26 ++++++++++++++++++++++++++
+ src/liblzma/liblzma_generic.map    |  1 +
+ src/liblzma/liblzma_linux.map      |  1 +
+ 4 files changed, 49 insertions(+)
+
+diff --git a/src/liblzma/api/lzma/filter.h b/src/liblzma/api/lzma/filter.h
+index 5ec9976d..41c5895e 100644
+--- a/src/liblzma/api/lzma/filter.h
++++ b/src/liblzma/api/lzma/filter.h
+@@ -124,6 +124,27 @@ extern LZMA_API(lzma_ret) lzma_filters_copy(
+ 		const lzma_allocator *allocator) lzma_nothrow;
+ 
+ 
++/**
++ * \brief       Free the options in the array of lzma_filter structures
++ *
++ * This frees the filter chain options. The filters array itself is not freed.
++ *
++ * The filters array must have at most LZMA_FILTERS_MAX + 1 elements
++ * including the terminating element which must have .id = LZMA_VLI_UNKNOWN.
++ * For all elements before the terminating element:
++ *   - options will be freed using the given lzma_allocator or,
++ *     if allocator is NULL, using free().
++ *   - options will be set to NULL.
++ *   - id will be set to LZMA_VLI_UNKNOWN.
++ *
++ * If filters is NULL, this does nothing but remember that this never frees
++ * the filters array itself.
++ */
++extern LZMA_API(void) lzma_filters_free(
++		lzma_filter *filters, const lzma_allocator *allocator)
++		lzma_nothrow;
++
++
+ /**
+  * \brief       Calculate approximate memory requirements for raw encoder
+  *
+diff --git a/src/liblzma/common/filter_common.c b/src/liblzma/common/filter_common.c
+index 0113035b..a803b4c2 100644
+--- a/src/liblzma/common/filter_common.c
++++ b/src/liblzma/common/filter_common.c
+@@ -190,6 +190,32 @@ error:
+ }
+ 
+ 
++extern LZMA_API(void)
++lzma_filters_free(lzma_filter *filters, const lzma_allocator *allocator)
++{
++	if (filters == NULL)
++		return;
++
++	for (size_t i = 0; filters[i].id != LZMA_VLI_UNKNOWN; ++i) {
++		if (i == LZMA_FILTERS_MAX) {
++			// The API says that LZMA_FILTERS_MAX + 1 is the
++			// maximum allowed size including the terminating
++			// element. Thus, we should never get here but in
++			// case there is a bug and we do anyway, don't go
++			// past the (probable) end of the array.
++			assert(0);
++			break;
++		}
++
++		lzma_free(filters[i].options, allocator);
++		filters[i].options = NULL;
++		filters[i].id = LZMA_VLI_UNKNOWN;
++	}
++
++	return;
++}
++
++
+ static lzma_ret
+ validate_chain(const lzma_filter *filters, size_t *count)
+ {
+diff --git a/src/liblzma/liblzma_generic.map b/src/liblzma/liblzma_generic.map
+index 7b9cec7a..3e3c52d5 100644
+--- a/src/liblzma/liblzma_generic.map
++++ b/src/liblzma/liblzma_generic.map
+@@ -114,4 +114,5 @@ global:
+ 	lzma_file_info_decoder;
+ 	lzma_stream_decoder_mt;
+ 	lzma_lzip_decoder;
++	lzma_filters_free;
+ } XZ_5.2;
+diff --git a/src/liblzma/liblzma_linux.map b/src/liblzma/liblzma_linux.map
+index 89719ddb..7f320d8f 100644
+--- a/src/liblzma/liblzma_linux.map
++++ b/src/liblzma/liblzma_linux.map
+@@ -129,4 +129,5 @@ global:
+ 	lzma_file_info_decoder;
+ 	lzma_stream_decoder_mt;
+ 	lzma_lzip_decoder;
++	lzma_filters_free;
+ } XZ_5.2;
+-- 
+2.39.2
+
