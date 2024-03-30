@@ -1,0 +1,49 @@
+From 59c4d6e1390f6f4176f43ac1dad1f7ac03c449b8 Mon Sep 17 00:00:00 2001
+From: Lasse Collin <lasse.collin@tukaani.org>
+Date: Tue, 25 Oct 2022 23:28:34 +0300
+Subject: [PATCH] Build: Add configure option --disable-microlzma.
+
+MicroLZMA was made for EROFS and used by erofs-utils.
+It might be used by something else in the future but
+those wanting a smaller build for specific situations
+can now disable this rarely-needed feature.
+---
+ configure.ac | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 81739979..170f48ec 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -294,6 +294,28 @@ else
+ fi
+ 
+ 
++#############
++# MicroLZMA #
++#############
++
++AC_MSG_CHECKING([if MicroLZMA support should be built])
++AC_ARG_ENABLE([microlzma], AS_HELP_STRING([--disable-microlzma],
++		[Do not build MicroLZMA encoder and decoder.
++		It is needed by specific applications only,
++		for example, erofs-utils.]),
++	[], [enable_microlzma=yes])
++case $enable_microlzma in
++	yes | no)
++		AC_MSG_RESULT([$enable_microlzma])
++		;;
++	*)
++		AC_MSG_RESULT([])
++		AC_MSG_ERROR([--enable-microlzma accepts only `yes' or `no'.])
++		;;
++esac
++AM_CONDITIONAL(COND_MICROLZMA, test "x$enable_microlzma" = xyes)
++
++
+ ###########################
+ # Assembler optimizations #
+ ###########################
+-- 
+2.39.2
+

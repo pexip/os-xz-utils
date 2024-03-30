@@ -15,3 +15,4 @@
 0015-liblzma-Make-lzma_index_decoder_init-visible-to-othe.patch
 0015-liblzma-Add-lzma_file_info_decoder.patch
 0016-liblzma-Add-MicroLZMA-stub.patch
+0017-Build-Add-configure-option-disable-microlzma.patch
