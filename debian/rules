@@ -53,6 +53,7 @@ ifeq ($(DEB_HOST_ARCH),amd64)
 	abi-compliance-checker -l liblzma5 \
 		-d1 debian/liblzma5.$(DEB_VERSION_UPSTREAM).abi \
 		-d2 debian/liblzma5.$(DEB_VERSION_UPSTREAM).new.abi \
+		-abi \
 		-report-path debian/acc_report.html
 endif
 
