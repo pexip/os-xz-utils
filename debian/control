@@ -6,7 +6,8 @@ XSBC-Pexip-Original-Maintainer: Jonathan Nieder <jrnieder@gmail.com>
 XSBC-Pexip-Original-Uploaders: Mohammed Adnène Trojette <adn+deb@diwi.org>
 Build-Depends: debhelper (>= 8.9.0), dpkg-dev (>= 1.16.2),
  autoconf (>= 2.64~), automake, libtool (>= 2.2),
- gettext, autopoint | gettext (<< 0.18-1), autopoint | cvs
+ gettext, autopoint | gettext (<< 0.18-1), autopoint | cvs,
+ abi-compliance-checker
 Build-Depends-Indep: doxygen
 Build-Conflicts: automake1.4
 Standards-Version: 4.3.0

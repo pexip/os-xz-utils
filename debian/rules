@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/default.mk
+
 %:
 	dh $@ --parallel $(opt_no_act)
 
@@ -26,6 +28,9 @@ override_dh_auto_clean:
 	dh_auto_clean --builddirectory debian/normal-build
 	dh_auto_clean --builddirectory debian/static-build
 	sh debian/clean.sh
+	rm -f debian/liblzma5.acc
+	rm -f debian/liblzma5.*.new.abi
+	rm -f debian/acc_report.html
 
 override_dh_auto_install:
 	dh_auto_install --builddirectory debian/xzdec-build
@@ -36,6 +41,20 @@ override_dh_auto_install:
 	mv debian/tmp/usr/lib/$$arch/liblzma.so.* debian/tmp/lib/$$arch/; \
 	dso=$$(basename $$(readlink debian/tmp/usr/lib/$$arch/liblzma.so)); \
 	ln -s -f /lib/$$arch/$$dso debian/tmp/usr/lib/$$arch/liblzma.so
+
+override_dh_install:
+	dh_install
+ifeq ($(DEB_HOST_ARCH),amd64)
+	sed -e 's/@ARCH@/$(DEB_HOST_MULTIARCH)/' \
+		<debian/liblzma5.acc.in >debian/liblzma5.acc
+	abi-compliance-checker -l liblzma5 -v1 $(DEB_VERSION) \
+		-dump debian/liblzma5.acc \
+		-dump-path debian/liblzma5.$(DEB_VERSION_UPSTREAM).new.abi
+	abi-compliance-checker -l liblzma5 \
+		-d1 debian/liblzma5.$(DEB_VERSION_UPSTREAM).abi \
+		-d2 debian/liblzma5.$(DEB_VERSION_UPSTREAM).new.abi \
+		-report-path debian/acc_report.html
+endif
 
 override_dh_installchangelogs:
 	dh_installchangelogs ChangeLog

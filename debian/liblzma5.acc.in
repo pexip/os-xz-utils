@@ -1,0 +1,9 @@
+<desc>
+ <headers>
+   debian/tmp/usr/include
+   debian/tmp/usr/include/lzma
+ </headers>
+ <libs>
+   debian/tmp/lib/@ARCH@/liblzma.so.5
+ </libs>
+</desc>
