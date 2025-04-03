@@ -1,15 +1,18 @@
+.\" SPDX-License-Identifier: 0BSD
 .\"
 .\" Author: Lasse Collin
 .\"
-.\" This file has been put into the public domain.
-.\" You can do whatever you want with this file.
+.\" french translation of XZ Utils man
+.\" Copyright (C) 2021 Debian French l10n team <debian-l10n-french@lists.debian.org>
+.\"  Translator
+.\" bubu <bubub@no-log.org>, 2021.
 .\"
 .\"*******************************************************************
 .\"
 .\" This file was generated with po4a. Translate the source file.
 .\"
 .\"*******************************************************************
-.TH XZDEC 1 19\-04\-2017 Tukaani "Utilitaires XZ"
+.TH XZDEC 1 2024\-04\-08 Tukaani "Utilitaires XZ"
 .SH NOM
 xzdec, lzmadec \- Small .xz et .lzma decompresseurs
 .SH SYNOPSIS
@@ -28,7 +31,7 @@ identique à \fBxzdec\fP, sauf que \fBlzmadec\fP prend en charge les fichiers
 Pour réduire la taille de l'exécutable, \fBxzdec\fP ne prend en charge ni le
 multithreading ni la localisation et ne lit pas les options des variables
 d'environnement \fBXZ_DEFAULTS\fP et \fBXZ_OPT\fP. \fBxzdec\fP ne gère pas
-l'affichage d'information sur la progression du traitement\ : envoyer
+l'affichage d'information sur la progression du traitement : envoyer
 \fBSIGINFO\fP à \fBxzdec\fP ne fait rien, mais envoyer \fBSIGUSR1\fP termine le
 processus au lieu d'afficher de l'information sur la progression.
 .SH OPTIONS
@@ -52,7 +55,7 @@ erreurs.
 .TP 
 \fB\-Q\fP, \fB\-\-no\-warn\fP
 Ignoré pour la compatibilité avec \fBxz\fP(1), \fBxzdec\fP n'utilise jamais le
-satut de sortie\ 2.
+satut de sortie 2.
 .TP 
 \fB\-h\fP, \fB\-\-help\fP
 Afficher un message d'aide et quitter.
@@ -68,7 +71,7 @@ Tout s'est bien passé.
 Une erreur est survenue.
 .PP
 A la différence de \fBxz\fP(1),\fBxzdec\fP n'a pas de messages d'avertissement, et
-donc le statut de sortie\ 2 n'est pas utilisé par \fBxzdec\fP.
+donc le statut de sortie 2 n'est pas utilisé par \fBxzdec\fP.
 .SH NOTES
 Utilisez \fBxz\fP(1) au lieu de \fBxzdec\fP ou \fBlzmadec\fP pour un usage normal de
 tous les jours. \fBxzdec\fP ou \fBlzmadec\fP ne sont utiles que pour les
@@ -80,8 +83,8 @@ peut être encore réduite en abandonnant des fonctionnalités de liblzma au
 moment de la compilation, mais cela ne devrait pas être fait pour des
 exécutables distribués sur des systèmes d'exploitation classique non
 embarqués. Si vous avez besoin d'un décompresseur vraiment petit, pensez à
-utiliser XZ\ Embedded.
+utiliser XZ Embedded.
 .SH "VOIR AUSSI"
 \fBxz\fP(1)
 .PP
-XZ Embarqué: <https://tukaani.org/xz/embedded.html>
+XZ Embedded: <https://tukaani.org/xz/embedded.html>
