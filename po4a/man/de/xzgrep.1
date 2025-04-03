@@ -11,11 +11,11 @@
 .\" This file was generated with po4a. Translate the source file.
 .\"
 .\"*******************************************************************
-.TH XZGREP 1 "19. März 2011" Tukaani XZ\-Dienstprogramme
+.TH XZGREP 1 "19. Juli 2022" Tukaani XZ\-Dienstprogramme
 .SH BEZEICHNUNG
 xzgrep \- komprimierte Dateien nach einem regulären Ausdruck durchsuchen
 .SH ÜBERSICHT
-\fBxzgrep\fP [\fIgrep\-Optionen\fP] [\fB\-e\fP] \fIMuster\fP \fIDateiname\fP …
+\fBxzgrep\fP [\fIgrep_Optionen\fP] [\fB\-e\fP] \fIMuster\fP [\fIDatei …\fP]
 .br
 \fBxzegrep\fP …
 .br
@@ -28,24 +28,37 @@ xzgrep \- komprimierte Dateien nach einem regulären Ausdruck durchsuchen
 \fBlzfgrep\fP …
 .SH BESCHREIBUNG
 \fBxzgrep\fP wendet \fBgrep\fP(1) auf \fIDateien\fP an, die entweder unkomprimiert
-oder mit \fBxz\fP(1), \fBlzma\fP(1), \fBgzip\fP(1), \fBbzip2\fP(1) oder \fBlzop\fP(1)
-komprimiert sein können. Alle angegebenen Optionen werden direkt an
+oder mit \fBxz\fP(1), \fBlzma\fP(1), \fBgzip\fP(1), \fBbzip2\fP(1), \fBlzop\fP(1) oder
+\fBzstd\fP komprimiert sein können. Alle angegebenen Optionen werden direkt an
 \fBgrep\fP(1) übergeben.
 .PP
 Wenn keine \fIDatei\fP angegeben ist, wird die Standardeingabe dekomprimiert
 (falls nötig) und an \fBgrep\fP übergeben. Beim Lesen aus der Standardeingabe
-keine Dateien unterstützt, die mit \fBgzip\fP(1), \fBbzip2\fP(1) oder \fBlzop\fP(1)
-komprimiert sind.
+keine Dateien unterstützt, die mit \fBgzip\fP(1), \fBbzip2\fP(1), \fBlzop\fP(1) oder
+\fBzstd\fP komprimiert sind.
 .PP
 Wenn \fBxzgrep\fP als \fBxzegrep\fP oder \fBxzfgrep\fP aufgerufen wird, dann wird
-\fBegrep\fP(1) oder \fBfgrep\fP(1) anstelle von \fBgrep\fP(1) verwendet. Genauso
+\fBgrep \-E\fP oder \fBgrep \-F\fP anstelle von \fBgrep\fP(1) verwendet. Genauso
 verhalten sich die Befehle \fBlzgrep\fP, \fBlzegrep\fP und \fBlzfgrep\fP, die die
 Abwärtskompatibilität zu den LZMA\-Dienstprogrammen gewährleisten.
-.PP
+.SH EXIT\-STATUS
+.TP 
+0
+In mindestens einer der Eingabedateien wurde mindestens ein Treffer
+gefunden. Es sind keine Fehler aufgetreten.
+.TP 
+1
+In keiner der Eingabedateien wurde ein Treffer gefunden. Es sind keine
+Fehler aufgetreten.
+.TP 
+>1
+Ein oder mehrere Fehler sind aufgetreten. Es ist unbekannt, ob Treffer
+gefunden wurden.
 .SH UMGEBUNGSVARIABLEN
 .TP 
 \fBGREP\fP
 Wenn die Umgebungsvariable \fBGREP\fP gesetzt ist, verwendet \fBxzgrep\fP deren
-Inhalt anstelle von \fBgrep\fP(1), \fBegrep\fP(1) oder \fBfgrep\fP(1).
+Inhalt anstelle von \fBgrep\fP(1), \fBgrep \-E\fP oder \fBgrep \-F\fP.
 .SH "SIEHE AUCH"
-\fBgrep\fP(1), \fBxz\fP(1), \fBgzip\fP(1), \fBbzip2\fP(1), \fBlzop\fP(1), \fBzgrep\fP(1)
+\fBgrep\fP(1), \fBxz\fP(1), \fBgzip\fP(1), \fBbzip2\fP(1), \fBlzop\fP(1), \fBzstd\fP(1),
+\fBzgrep\fP(1)
