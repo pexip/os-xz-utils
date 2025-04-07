@@ -1,3 +1,16 @@
+xz-utils (5.4.1-1+pexip24u1) pexip; urgency=medium
+
+  * New upstream release with security fix.
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Mon, 07 Apr 2023 11:39:23 +0100
+
+xz-utils (5.4.1-1) bookworm-security; urgency=medium
+
+  * Add fix from upstream when the threaded decompresses frees memory too
+    early on invalid input (CVE-2025-31115).
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Thu, 03 Apr 2025 21:55:39 +0200
+
 xz-utils (5.4.1-0.2+pexip24u4) pexip-bookworm; urgency=medium
 
   * New versioning scheme

@@ -2,3 +2,8 @@ Translations-Add-Brazilian-Portuguese-translation-of-man-.patch
 po-pt_BR-Revert-changes-from-the-release.patch
 Translations-Update-the-Brazilian-Portuguese-translation.patch
 Add-da.po-based-on-translation-from-manpages-l10n.patch
+liblzma-Add-assertions-to-lzma_bufcpy.patch
+liblzma-mt-dec-Fix-a-comment.patch
+liblzma-mt-dec-Simplify-by-removing-the-THR_STOP-state.patch
+liblzma-mt-dec-Don-t-free-the-input-buffer-too-early-CVE-.patch
+liblzma-mt-dec-Don-t-modify-thr-in_size-in-the-worker-thr.patch
