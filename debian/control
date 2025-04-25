@@ -14,7 +14,7 @@ Vcs-Browser: https://salsa.debian.org/debian/xz-utils
 Vcs-Git: https://salsa.debian.org/debian/xz-utils
 Homepage: https://tukaani.org/xz/
 Rules-Requires-Root: no
-XS-Pexip-Upstream: http://deb.debian.org/debian/ bookworm
+XS-Pexip-Upstream: http://deb.debian.org/debian/ trixie
 
 Package: liblzma5
 Section: libs
