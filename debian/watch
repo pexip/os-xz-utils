@@ -1,3 +1,4 @@
 version=4
 opts=dversionmangle=s/\+\d{8}$//,pgpsigurlmangle=s/$/.sig/ \
-https://tukaani.org/xz/xz-([\d.]*(?:beta)?)\.tar\.xz
+https://tukaani.org/xz/		\
+https://github.com/tukaani-project/xz/releases/download/v[^/]+/xz-(5\.8\.[\d\.]*(?:beta|alpha)?)\.tar\.xz

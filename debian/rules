@@ -4,34 +4,26 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 %:
 	dh $@ $(opt_no_act)
 
-override_dh_autoreconf:
-	./autogen.sh
-
 override_dh_auto_clean:
 	dh_auto_clean --builddirectory debian/xzdec-build
 	dh_auto_clean --builddirectory debian/normal-build
 	dh_auto_clean --builddirectory debian/static-build
 
 override_dh_auto_install-indep:
+	dh_auto_install --builddirectory debian/normal-build
 
 override_dh_auto_install-arch:
 	dh_auto_install --builddirectory debian/xzdec-build
-	dh_auto_install --builddirectory debian/normal-build
 	dh_auto_install --builddirectory debian/static-build
-	set -e; arch=$$(dpkg-architecture -qDEB_HOST_MULTIARCH); \
-	install -d debian/tmp/lib/$$arch; \
-	mv debian/tmp/usr/lib/$$arch/liblzma.so.* debian/tmp/lib/$$arch/; \
-	dso=$$(basename $$(readlink debian/tmp/usr/lib/$$arch/liblzma.so)); \
-	ln -s -f /lib/$$arch/$$dso debian/tmp/usr/lib/$$arch/liblzma.so
+	dh_auto_install --builddirectory debian/normal-build
 
 override_dh_installchangelogs:
 	dh_installchangelogs ChangeLog
 
 override_dh_auto_build-indep:
-	cd debian/normal-build && doxygen Doxyfile
+	dh_auto_install --builddirectory debian/normal-build
 
 override_dh_auto_build-arch:
-	$(MAKE) -C debian/normal-build/po update-gmo
 	dh_auto_build --builddirectory debian/normal-build
 	dh_auto_build --builddirectory debian/static-build
 	# The xzdec binary/ package is built with -Os as suggested in PACKAGERS
@@ -50,7 +42,19 @@ else
 	dh_auto_test --builddirectory debian/xzdec-build
 endif
 
-override_dh_auto_configure:
+override_dh_auto_configure-indep:
+ifneq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+	@echo Skipping docs
+else
+	dh_auto_configure --builddirectory debian/normal-build -- \
+		$(opt_reproduce) \
+		--enable-threads --disable-static \
+		$(opt_optimize) $(opt_quiet) 	\
+		--enable-doxygen		\
+		--disable-xzdec --disable-lzmadec
+endif
+
+override_dh_auto_configure-arch:
 	dh_auto_configure --builddirectory debian/normal-build -- \
 		$(opt_reproduce) \
 		--enable-threads --disable-static \
@@ -75,7 +79,7 @@ override_dh_auto_configure:
 
 small_flags_env =
 small_flags_env += DEB_CFLAGS_MAINT_STRIP='-O2 -O3'
-small_flags_env += DEB_CFLAGS_MAINT_PREPEND=-Os -D_BLHC_IGNORE_THIS_LINE
+small_flags_env += DEB_CFLAGS_MAINT_PREPEND='-Os -D_BLHC_IGNORE_THIS_LINE'
 flags_cmd = dpkg-buildflags --export=configure
 opt_optimize = $(shell $(flags_cmd))
 opt_optimize_small = $(shell $(small_flags_env) $(flags_cmd))
@@ -91,10 +95,6 @@ ifeq (hurd,$(shell dpkg-architecture -qDEB_HOST_ARCH_OS))
         opt_optimize += --enable-assembler=x86
         opt_optimize_small += --enable-assembler=x86
     endif
-    ifeq (amd64,$(cputype))
-        opt_optimize += --enable-assembler=x86_64
-        opt_optimize_small += --enable-assembler=x86_64
-    endif
 endif
 
 ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
@@ -102,7 +102,7 @@ ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
     opt_optimize_small += --disable-assembler
 endif
 
-ifneq (,$(findstring n,$(MAKEFLAGS)))
+ifneq (,$(findstring n,$(firstword -$(MAKEFLAGS))))
     opt_no_act = --no-act
 endif
 
@@ -110,6 +110,9 @@ ifneq (,$(filter quiet,$(DEB_BUILD_OPTIONS)))
     opt_quiet = --quiet
     MAKEFLAGS += --quiet
 endif
+
+override_dh_makeshlibs:
+	dh_makeshlibs --add-udeb=liblzma5-udeb
 
 # Build a tarball with the latest upstream version.
 # This is made complicated by the need to choose a nice version number.

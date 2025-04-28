@@ -1,36 +1,44 @@
+.\" SPDX-License-Identifier: 0BSD
 .\"
-.\" Original zdiff.1 for gzip: Jean-loup Gailly
-.\" Modifications for XZ Utils: Lasse Collin
+.\" Authors: Andrew Dudman
+.\"          Lasse Collin
 .\"
-.\" License: GNU GPLv2+
+.\" Korean translation for the xz-man
+.\" Seong-ho Cho <darkcircle.0426@gmail.com>, 2023, 2024.
+.\"
+.\" (Note that this file is based on xzless.1 instead of gzip's zmore.1.)
 .\"
 .\"*******************************************************************
 .\"
 .\" This file was generated with po4a. Translate the source file.
 .\"
 .\"*******************************************************************
-.TH XZMORE 1 2013\-06\-30 Tukaani "XZ 유틸리티"
+.TH XZMORE 1 2025\-03\-06 Tukaani "XZ 유틸리티"
 .SH 이름
 xzmore, lzmore \- xz 압축 (텍스트) 파일 또는 lzma 압축 (텍스트) 파일을 봅니다
+.
 .SH 요약
-\fBxzmore\fP [\fI<파일>...\fP]
+\fBxzmore\fP [\fI<파일>\fP...]
 .br
-\fBlzmore\fP [\fI<파일>...\fP]
+\fBlzmore\fP [\fIfile\fP...] (사용 안 함)
+.
 .SH 설명
-\fBxzmore\fP 는 \fBxz\fP(1)  또는 \fBlzma\fP(1)  형식으로 압축한 텍스트 파일을 한 번에 한 화면만큼 소프트\-복제
-터미널에 표시하는 필터입니다.
+\fBxzmore\fP 명령은 압축 파일에 들어있는 텍스트를 \fBmore\fP(1) 명령으로 터미널에 나타냅니다.  \fBxz\fP(1) 방식으로
+압축을 해제하는 파일만 지원합니다.  다른 파일은 이미 압축을 해제한 파일로 간주합니다.  \fI<파일>\fP을 지정하지
+않으면, \fBxzmore\fP 프로그램에서는 표준 입력을 읽어들입니다.  키보드 명령 정보는 \fBmore\fP(1)  설명서를 참고하십시오.
 .PP
-기본 \fBmore\fP 대신 다른 페이저 프로그램을 사용하려면,  \fBPAGER\fP 환경 변수에 원하는 프로그램 이름을 넣으십시오.
-\fBlzmore\fP의 이름은 LZMA 유틸리티의 하위 호환성을 목적으로 제공합니다.
-.TP 
-\fBe\fP 또는 \fBq\fP
-\-\-More\-\-(다음 파일: \fI<파일>\fP)  프롬프트가 뜨면, 이 명령은 \fBxzmore\fP를 빠져나가게 합니다.
-.TP 
-\fBs\fP
-\-\-More\-\-(다음 파일: \fI<파일>\fP)  프롬프트가 뜨면, 이 명령은 \fBxzmore\fP에서 다음 파일로 건너뛰어 계속
-실행하게 합니다.
+참고로 \fBmore\fP(1) 명령 구현체에 따라 반대 방향(윗방향)으로의 스크롤은 못할 수도 있습니다.  \fBxzmore\fP 명령이
+\fBmore\fP(1) 명령에 압축 해제한 데이터를 파이프로 전달하기 때문입니다.  \fBxzless\fP(1)는   좀 더 나은 기능을 가진
+\fBless\fP(1) 명령을 활용합니다.
 .PP
-파일 내용을 실제로 보는 동안 지원하는 키보드 명령 목록을 보려면, \fBmore\fP(1)  와 같은 사용하는 페이저의 설명서를
-참고하십시오.
+\fBlzmore\fP 명령은 LZMA 유틸리티 하위 호환용으로 제공합니다.  해당 명령은 오래되어 이후 버전에서 제거합니다.
+.
+.SH 환경
+.TP 
+.\" TRANSLATORS: Don't translate the uppercase PAGER.
+.\" It is a name of an environment variable.
+\fBPAGER\fP
+\fBPAGER\fP 환경변수 값을 설정했다면, \fBmore\fP(1) 대신 해당 환경변수 값을 화면 표시 프로그램으로 사용합니다.
+.
 .SH "추가 참조"
 \fBmore\fP(1), \fBxz\fP(1), \fBxzless\fP(1), \fBzmore\fP(1)
