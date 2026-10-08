@@ -1,3 +1,17 @@
+xz-utils (5.8.1-1+pexip25u4+deb13u2) pexip-trixie; urgency=medium
+
+  * New upstream release with security fix
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Thu, 08 Oct 2026 14:08:48 +0100
+
+xz-utils (5.8.1-1+deb13u2) trixie-security; urgency=medium
+
+  * GHSA-5qpq-xqfv-j9pg ("Invalid write if a decoder is reinitialized after
+    allocation failure") (Closes: #1147318).
+  * Protect progress variable with a mutex.
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Sun, 27 Sep 2026 15:30:44 +0200
+
 xz-utils (5.8.1-1+pexip25u3+deb13u1) pexip-trixie; urgency=medium
 
   * New upstream release

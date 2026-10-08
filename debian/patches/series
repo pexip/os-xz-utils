@@ -1,1 +1,5 @@
 0001-liblzma-Fix-a-buffer-overflow-in-lzma_index_append.patch
+liblzma-mt-dec-Protect-progress_in-update-with-mutex.patch
+liblzma-Make-lzma_lz_decoder_init-safe-to-reinit-after-al.patch
+liblzma-Clean-up-after-a-filter-chain-initialization-erro.patch
+liblzma-Make-lzma_simple_coder_init-reinit-safe-after-all.patch

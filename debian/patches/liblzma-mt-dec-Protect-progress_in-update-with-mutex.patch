@@ -1,0 +1,39 @@
+From: Trithem90 <149891156+Trithem90@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 19:52:23 +0200
+Subject: liblzma: mt dec: Protect progress_in update with mutex
+
+Worker threads update coder->progress_in while holding coder->mutex, but
+the main thread updated the same field without the mutex while decoding
+the next Block Header. ThreadSanitizer reported the concurrent writes and
+lzma_get_progress() under-reported input progress by one Block.
+
+All other coder->progress_in/progress_out accesses in stream_decode_mt()
+are done when the worker threads aren't active, so only the access in
+SEQ_BLOCK_HEADER needs to lock coder->mutex.
+
+Co-authored-by: Lasse Collin <lasse.collin@tukaani.org>
+Fixes: 4cce3e27f529 ("liblzma: Add threaded .xz decompressor.")
+Closes: https://github.com/tukaani-project/xz/pull/243
+(cherry picked from commit c6e3aadbb510e44cecfe870408ecfea1d1ca792c)
+---
+ src/liblzma/common/stream_decoder_mt.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/liblzma/common/stream_decoder_mt.c b/src/liblzma/common/stream_decoder_mt.c
+index 271f9b0..c880ab3 100644
+--- a/src/liblzma/common/stream_decoder_mt.c
++++ b/src/liblzma/common/stream_decoder_mt.c
+@@ -1079,7 +1079,12 @@ stream_decode_mt(void *coder_ptr, const lzma_allocator *allocator,
+ 		const size_t in_old = *in_pos;
+ 		const lzma_ret ret = decode_block_header(coder, allocator,
+ 				in, in_pos, in_size);
+-		coder->progress_in += *in_pos - in_old;
++
++		// Worker threads may finish earlier Blocks and need to update
++		// coder->progress_in at the same time with us.
++		mythread_sync(coder->mutex) {
++			coder->progress_in += *in_pos - in_old;
++		}
+ 
+ 		if (ret == LZMA_OK) {
+ 			// We didn't decode the whole Block Header yet.
